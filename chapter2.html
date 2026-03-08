@@ -1,0 +1,1488 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>模組二：預算管理——讓錢流向正確的地方</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@300;400;500;600;700;900&family=IBM+Plex+Mono:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --cream:        #F5F0E8;
+      --cream-dark:   #EDE6D6;
+      --cream-mid:    #E4DBC8;
+      --cream-border: #D0C4AC;
+      --ink:          #1A1510;
+      --ink-light:    #3D3228;
+      --ink-muted:    #7A6E62;
+      --red:          #C0392B;
+      --red-dark:     #96281B;
+      --red-wash:     #F0E0DD;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; font-size: 16px; }
+
+    body {
+      background: var(--cream);
+      color: var(--ink);
+      font-family: 'Noto Serif TC', Georgia, serif;
+      line-height: 1.8;
+      overflow-x: hidden;
+    }
+
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 9000;
+    }
+
+    #progress-bar {
+      position: fixed;
+      top: 0; left: 0;
+      height: 2px;
+      background: var(--red);
+      z-index: 9999;
+      transition: width 0.08s linear;
+    }
+
+    /* ── TOP NAV ── */
+    .top-nav {
+      position: sticky;
+      top: 0;
+      z-index: 500;
+      background: var(--cream-dark);
+      border-bottom: 1px solid var(--cream-border);
+      padding: 0 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 52px;
+    }
+
+    .nav-breadcrumb {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 0.14em;
+      color: var(--ink-muted);
+      text-transform: uppercase;
+    }
+
+    .nav-breadcrumb span { color: var(--red); }
+
+    .nav-links { display: flex; }
+
+    .nav-links a {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--ink-muted);
+      text-decoration: none;
+      padding: 0 20px;
+      height: 52px;
+      display: flex;
+      align-items: center;
+      border-left: 1px solid var(--cream-border);
+      transition: color 0.2s, background 0.2s;
+    }
+
+    .nav-links a:hover { color: var(--ink); background: var(--cream-mid); }
+    .nav-links a.active { color: var(--red); }
+
+    /* ── HERO ── */
+    .hero {
+      padding: 100px 60px 80px;
+      border-bottom: 2px solid var(--ink);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero-rule {
+      position: absolute;
+      top: 44px; left: 60px; right: 60px;
+      height: 1px;
+      background: var(--ink);
+    }
+
+    .hero-meta {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--ink-muted);
+      margin-bottom: 32px;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .hero-meta .dot {
+      width: 4px; height: 4px;
+      background: var(--red);
+      display: inline-block;
+    }
+
+    .hero-meta .mod-label { color: var(--red); font-weight: 500; }
+
+    .hero-title {
+      font-size: clamp(40px, 7vw, 88px);
+      font-weight: 900;
+      line-height: 1.0;
+      letter-spacing: -0.025em;
+      max-width: 900px;
+    }
+
+    .hero-title .line2 {
+      display: block;
+      color: var(--red);
+    }
+
+    .hero-deck {
+      margin-top: 28px;
+      max-width: 600px;
+      font-size: 17px;
+      font-weight: 300;
+      color: var(--ink-light);
+      line-height: 1.9;
+    }
+
+    .hero-meta-bottom {
+      margin-top: 48px;
+      display: flex;
+      gap: 40px;
+    }
+
+    .meta-item { display: flex; flex-direction: column; gap: 4px; }
+
+    .meta-label {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--ink-muted);
+    }
+
+    .meta-value {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--ink);
+    }
+
+    .hero-number {
+      position: absolute;
+      right: 60px;
+      bottom: -20px;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 220px;
+      font-weight: 600;
+      color: var(--cream-border);
+      line-height: 1;
+      user-select: none;
+      pointer-events: none;
+      letter-spacing: -0.05em;
+    }
+
+    /* ── LAYOUT ── */
+    .page-body {
+      display: grid;
+      grid-template-columns: 220px 1fr;
+    }
+
+    /* ── LESSON SIDEBAR ── */
+    .lesson-nav {
+      border-right: 1px solid var(--cream-border);
+      padding: 48px 28px;
+      position: sticky;
+      top: 52px;
+      height: calc(100vh - 52px);
+      overflow-y: auto;
+      background: var(--cream-dark);
+    }
+
+    .lesson-nav-title {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 9px;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: var(--ink-muted);
+      margin-bottom: 20px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--cream-border);
+    }
+
+    .lesson-nav a {
+      display: block;
+      padding: 10px 0;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--ink-muted);
+      text-decoration: none;
+      transition: color 0.18s;
+      line-height: 1.45;
+      border-bottom: 1px solid var(--cream-border);
+    }
+
+    .lesson-nav a:last-child { border-bottom: none; }
+    .lesson-nav a:hover { color: var(--ink); }
+    .lesson-nav a.active { color: var(--red); }
+
+    .lesson-nav .ln-num {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      color: var(--cream-border);
+      display: block;
+      margin-bottom: 2px;
+      transition: color 0.18s;
+    }
+
+    .lesson-nav a.active .ln-num { color: var(--red); }
+    .lesson-nav a:hover .ln-num { color: var(--ink-muted); }
+
+    /* ── LESSONS CONTENT ── */
+    .lessons-content { padding: 0; }
+
+    /* ── LESSON ── */
+    .lesson {
+      padding: 80px 80px 72px;
+      border-bottom: 1px solid var(--cream-border);
+      opacity: 0;
+      transform: translateY(18px);
+      transition: opacity 0.55s ease, transform 0.55s ease;
+    }
+
+    .lesson.visible { opacity: 1; transform: translateY(0); }
+    .lesson:nth-child(even) { background: var(--cream-dark); }
+
+    .lesson-header {
+      margin-bottom: 52px;
+      padding-bottom: 36px;
+      border-bottom: 1px solid var(--cream-border);
+    }
+
+    .lesson-tag-row {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .lesson-num-tag {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--red);
+      font-weight: 500;
+    }
+
+    .lesson-duration {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.15em;
+      color: var(--ink-muted);
+    }
+
+    .lesson-title {
+      font-size: clamp(22px, 3vw, 34px);
+      font-weight: 700;
+      line-height: 1.25;
+      letter-spacing: -0.01em;
+      margin-bottom: 12px;
+    }
+
+    .lesson-subtitle {
+      font-size: 15px;
+      font-weight: 300;
+      color: var(--ink-muted);
+      line-height: 1.7;
+      max-width: 560px;
+    }
+
+    /* ── CONTENT BLOCKS ── */
+    .content-block { margin-bottom: 48px; }
+
+    .block-label {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 9px;
+      letter-spacing: 0.28em;
+      text-transform: uppercase;
+      color: var(--ink-muted);
+      margin-bottom: 16px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--cream-border);
+    }
+
+    .body-text {
+      font-size: 15.5px;
+      line-height: 2.0;
+      color: var(--ink-light);
+    }
+
+    .body-text + .body-text { margin-top: 20px; }
+    .body-text strong { color: var(--ink); font-weight: 600; }
+
+    /* ── PULL QUOTE ── */
+    .pull-quote {
+      margin: 40px 0;
+      padding: 28px 0 28px 36px;
+      border-left: 3px solid var(--red);
+    }
+
+    .pull-quote-text {
+      font-size: 19px;
+      font-weight: 500;
+      line-height: 1.7;
+      color: var(--ink);
+      font-style: italic;
+    }
+
+    .pull-quote-source {
+      margin-top: 12px;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      color: var(--red);
+    }
+
+    /* ── DATA ROW ── */
+    .data-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1px;
+      background: var(--cream-border);
+      border: 1px solid var(--cream-border);
+      margin: 36px 0;
+    }
+
+    .data-cell {
+      background: var(--cream);
+      padding: 28px;
+      transition: background 0.2s;
+    }
+
+    .lesson:nth-child(even) .data-cell { background: var(--cream-dark); }
+    .data-cell:hover { background: var(--red-wash); }
+
+    .data-num {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 36px;
+      font-weight: 600;
+      color: var(--red);
+      line-height: 1;
+      margin-bottom: 8px;
+    }
+
+    .data-label { font-size: 13px; color: var(--ink-muted); line-height: 1.5; }
+
+    /* ── ALLOCATION VISUAL ── */
+    .allocation-visual {
+      margin: 36px 0;
+      border: 1px solid var(--cream-border);
+    }
+
+    .alloc-bar {
+      height: 12px;
+      display: flex;
+      overflow: hidden;
+    }
+
+    .alloc-bar .seg-need { background: var(--ink); flex: 50; }
+    .alloc-bar .seg-want { background: var(--ink-muted); flex: 30; }
+    .alloc-bar .seg-save { background: var(--red); flex: 20; }
+
+    .alloc-rows { display: flex; flex-direction: column; }
+
+    .alloc-row {
+      display: grid;
+      grid-template-columns: 80px 1fr 200px;
+      border-bottom: 1px solid var(--cream-border);
+      align-items: stretch;
+    }
+
+    .alloc-row:last-child { border-bottom: none; }
+
+    .alloc-pct {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 28px;
+      font-weight: 600;
+      padding: 20px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-right: 1px solid var(--cream-border);
+    }
+
+    .alloc-pct.need { color: var(--ink); }
+    .alloc-pct.want { color: var(--ink-muted); }
+    .alloc-pct.save { color: var(--red); }
+
+    .alloc-body {
+      padding: 20px 24px;
+      border-right: 1px solid var(--cream-border);
+    }
+
+    .alloc-name {
+      font-size: 15px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .alloc-desc { font-size: 13px; color: var(--ink-muted); line-height: 1.6; }
+
+    .alloc-examples {
+      padding: 20px 20px;
+    }
+
+    .alloc-ex-label {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 9px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--ink-muted);
+      margin-bottom: 6px;
+    }
+
+    .alloc-ex-list {
+      font-size: 12.5px;
+      color: var(--ink-muted);
+      line-height: 1.8;
+    }
+
+    /* ── CONCEPT LIST ── */
+    .concept-list {
+      margin: 28px 0;
+      border: 1px solid var(--cream-border);
+    }
+
+    .concept-item {
+      display: grid;
+      grid-template-columns: 200px 1fr;
+      border-bottom: 1px solid var(--cream-border);
+    }
+
+    .concept-item:last-child { border-bottom: none; }
+
+    .concept-term {
+      padding: 20px 24px;
+      font-weight: 600;
+      font-size: 14px;
+      line-height: 1.5;
+      border-right: 1px solid var(--cream-border);
+      background: var(--cream-mid);
+    }
+
+    .concept-def {
+      padding: 20px 28px;
+      font-size: 14px;
+      color: var(--ink-muted);
+      line-height: 1.7;
+    }
+
+    /* ── STEPS ── */
+    .steps { margin: 28px 0; }
+
+    .step-item {
+      display: grid;
+      grid-template-columns: 52px 1fr;
+      border-bottom: 1px solid var(--cream-border);
+    }
+
+    .step-item:first-child { border-top: 1px solid var(--cream-border); }
+
+    .step-num {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--cream);
+      background: var(--ink);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px 0;
+    }
+
+    .step-content { padding: 20px 28px; }
+
+    .step-title {
+      font-size: 15px;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+
+    .step-desc {
+      font-size: 13.5px;
+      color: var(--ink-muted);
+      line-height: 1.7;
+    }
+
+    /* ── COMPARISON TABLE ── */
+    .compare-table {
+      margin: 28px 0;
+      border: 1px solid var(--cream-border);
+      width: 100%;
+    }
+
+    .compare-table thead tr {
+      background: var(--ink);
+      color: var(--cream);
+    }
+
+    .compare-table th {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      padding: 14px 20px;
+      text-align: left;
+      font-weight: 500;
+      border-right: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .compare-table th:last-child { border-right: none; }
+
+    .compare-table td {
+      font-size: 13.5px;
+      padding: 16px 20px;
+      border-right: 1px solid var(--cream-border);
+      border-bottom: 1px solid var(--cream-border);
+      color: var(--ink-light);
+      line-height: 1.6;
+      vertical-align: top;
+    }
+
+    .compare-table td:last-child { border-right: none; }
+    .compare-table tr:last-child td { border-bottom: none; }
+
+    .compare-table tr:nth-child(even) td { background: var(--cream-dark); }
+
+    .compare-table .td-method {
+      font-weight: 600;
+      color: var(--ink);
+      white-space: nowrap;
+    }
+
+    .compare-table .td-good { color: var(--ink); }
+    .compare-table .td-bad { color: var(--ink-muted); }
+
+    /* ── ACCOUNT DIAGRAM ── */
+    .account-diagram {
+      margin: 36px 0;
+      display: grid;
+      grid-template-columns: 1fr 24px 1fr 24px 1fr 24px 1fr;
+      align-items: center;
+      gap: 0;
+    }
+
+    .acct-box {
+      border: 1px solid var(--cream-border);
+      padding: 20px 18px;
+      background: var(--cream);
+      position: relative;
+    }
+
+    .lesson:nth-child(even) .acct-box { background: var(--cream-dark); }
+
+    .acct-box.primary {
+      border-color: var(--red);
+      background: var(--red-wash);
+    }
+
+    .acct-label {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 9px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--ink-muted);
+      margin-bottom: 6px;
+    }
+
+    .acct-name {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--ink);
+      margin-bottom: 4px;
+      line-height: 1.3;
+    }
+
+    .acct-pct {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 20px;
+      font-weight: 600;
+      color: var(--red);
+      margin-bottom: 4px;
+    }
+
+    .acct-desc { font-size: 12px; color: var(--ink-muted); line-height: 1.5; }
+
+    .acct-arrow {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 14px;
+      color: var(--ink-muted);
+      text-align: center;
+    }
+
+    /* ── HIGHLIGHT BOX ── */
+    .highlight-box {
+      background: var(--ink);
+      color: var(--cream);
+      padding: 36px 40px;
+      margin: 36px 0;
+    }
+
+    .highlight-box .hl-label {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--red);
+      margin-bottom: 14px;
+    }
+
+    .highlight-box .hl-text {
+      font-size: 15px;
+      line-height: 1.9;
+      color: rgba(245,240,232,0.82);
+    }
+
+    .highlight-box .hl-text strong { color: var(--cream); }
+
+    /* ── FORMULA ── */
+    .formula-block {
+      font-family: 'IBM Plex Mono', monospace;
+      background: var(--cream-mid);
+      border: 1px solid var(--cream-border);
+      padding: 28px 32px;
+      margin: 28px 0;
+      font-size: 14px;
+      line-height: 2.1;
+      color: var(--ink);
+    }
+
+    .formula-block .f-comment { color: var(--ink-muted); font-size: 12px; }
+    .formula-block .f-highlight { color: var(--red); font-weight: 600; }
+
+    /* ── CHECKLIST ── */
+    .checklist {
+      margin: 28px 0;
+      border: 1px solid var(--cream-border);
+    }
+
+    .check-item {
+      display: grid;
+      grid-template-columns: 48px 1fr;
+      border-bottom: 1px solid var(--cream-border);
+    }
+
+    .check-item:last-child { border-bottom: none; }
+
+    .check-mark {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-right: 1px solid var(--cream-border);
+      background: var(--cream-mid);
+    }
+
+    .check-box {
+      width: 14px; height: 14px;
+      border: 1.5px solid var(--cream-border);
+    }
+
+    .check-content {
+      padding: 18px 24px;
+    }
+
+    .check-title {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 4px;
+      color: var(--ink);
+    }
+
+    .check-desc {
+      font-size: 13px;
+      color: var(--ink-muted);
+      line-height: 1.65;
+    }
+
+    /* ── TAKEAWAY ── */
+    .takeaway {
+      margin-top: 48px;
+      padding-top: 32px;
+      border-top: 2px solid var(--ink);
+    }
+
+    .takeaway-label {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: var(--red);
+      margin-bottom: 14px;
+    }
+
+    .takeaway-text {
+      font-size: 17px;
+      font-weight: 500;
+      font-style: italic;
+      color: var(--ink);
+      line-height: 1.75;
+    }
+
+    /* ── TOOLS ROW ── */
+    .tools-row {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 40px;
+      padding-top: 28px;
+      border-top: 1px solid var(--cream-border);
+    }
+
+    .tool-tag {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 0.06em;
+      padding: 6px 16px;
+      border: 1px solid var(--cream-border);
+      color: var(--ink-muted);
+    }
+
+    .tool-tag.primary {
+      border-color: var(--red);
+      color: var(--red);
+      background: var(--red-wash);
+    }
+
+    /* ── CHAPTER FOOTER ── */
+    .chapter-footer {
+      background: var(--ink);
+      color: var(--cream);
+      padding: 72px 80px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 80px;
+    }
+
+    .cf-title {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--red);
+      margin-bottom: 16px;
+    }
+
+    .cf-heading {
+      font-size: 22px;
+      font-weight: 700;
+      line-height: 1.3;
+      margin-bottom: 16px;
+    }
+
+    .cf-text {
+      font-size: 14px;
+      color: rgba(245,240,232,0.6);
+      line-height: 1.85;
+    }
+
+    .cf-nav-links {
+      display: flex;
+      gap: 32px;
+      margin-top: 24px;
+    }
+
+    .cf-link {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--cream);
+      text-decoration: none;
+      border-bottom: 1px solid var(--red);
+      padding-bottom: 2px;
+      transition: color 0.2s;
+    }
+
+    .cf-link:hover { color: var(--red); }
+    .cf-link.prev { border-color: rgba(245,240,232,0.3); }
+    .cf-link.prev:hover { border-color: var(--red); color: var(--red); }
+
+    /* ── SITE FOOTER ── */
+    .site-footer {
+      padding: 24px 60px;
+      border-top: 1px solid var(--cream-border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--cream-dark);
+    }
+
+    .sf-logo {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+    }
+
+    .sf-logo span { color: var(--red); }
+
+    .sf-copy {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 11px;
+      color: var(--ink-muted);
+    }
+
+    /* ── SCROLLBAR ── */
+    .lesson-nav::-webkit-scrollbar { width: 3px; }
+    .lesson-nav::-webkit-scrollbar-thumb { background: var(--cream-border); }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 1024px) {
+      .page-body { grid-template-columns: 1fr; }
+      .lesson-nav { display: none; }
+      .lesson { padding: 56px 40px; }
+      .hero { padding: 72px 40px 60px; }
+      .hero-rule { left: 40px; right: 40px; }
+      .chapter-footer { padding: 56px 40px; gap: 48px; }
+      .site-footer { padding: 20px 40px; }
+      .top-nav { padding: 0 40px; }
+      .account-diagram { grid-template-columns: 1fr; }
+      .acct-arrow { transform: rotate(90deg); padding: 4px 0; }
+    }
+
+    @media (max-width: 640px) {
+      .hero { padding: 56px 24px 48px; }
+      .hero-rule { left: 24px; right: 24px; }
+      .hero-number { display: none; }
+      .hero-meta { flex-wrap: wrap; }
+      .lesson { padding: 40px 24px; }
+      .data-row { grid-template-columns: 1fr; }
+      .concept-item { grid-template-columns: 1fr; }
+      .concept-term { border-right: none; border-bottom: 1px solid var(--cream-border); }
+      .alloc-row { grid-template-columns: 60px 1fr; }
+      .alloc-examples { display: none; }
+      .chapter-footer { grid-template-columns: 1fr; gap: 40px; padding: 40px 24px; }
+      .site-footer { padding: 20px 24px; flex-direction: column; gap: 8px; text-align: center; }
+      .top-nav { padding: 0 20px; }
+      .nav-links { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<div id="progress-bar"></div>
+
+<!-- TOP NAV -->
+<nav class="top-nav">
+  <div class="nav-breadcrumb">個人理財課程 / <span>模組二</span></div>
+  <div class="nav-links">
+    <a href="index.html">課程目錄</a>
+    <a href="chapter1.html">模組一</a>
+    <a href="#lesson-1" class="active">單元 01</a>
+    <a href="#lesson-2">單元 02</a>
+    <a href="#lesson-3">單元 03</a>
+    <a href="#lesson-4">單元 04</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<header class="hero">
+  <div class="hero-rule"></div>
+  <div class="hero-meta">
+    <span class="mod-label">Module 02</span>
+    <span class="dot"></span>
+    <span>Budgeting</span>
+    <span class="dot"></span>
+    <span>預算管理</span>
+  </div>
+  <h1 class="hero-title">
+    預算管理
+    <span class="line2">讓錢流向正確的地方</span>
+  </h1>
+  <p class="hero-deck">建立系統性的現金流管理架構，讓每一分錢都有明確的任務。從黃金法則到自動化系統，這個模組將幫助你從「月光族」徹底轉型為「有意識的消費者」。</p>
+  <div class="hero-meta-bottom">
+    <div class="meta-item">
+      <span class="meta-label">單元數</span>
+      <span class="meta-value">04</span>
+    </div>
+    <div class="meta-item">
+      <span class="meta-label">學習時間</span>
+      <span class="meta-value">80 min</span>
+    </div>
+    <div class="meta-item">
+      <span class="meta-label">難度</span>
+      <span class="meta-value">入門</span>
+    </div>
+    <div class="meta-item">
+      <span class="meta-label">附件</span>
+      <span class="meta-value">4 份</span>
+    </div>
+  </div>
+  <div class="hero-number">02</div>
+</header>
+
+<!-- PAGE BODY -->
+<div class="page-body">
+
+  <aside class="lesson-nav">
+    <div class="lesson-nav-title">本章單元</div>
+    <a href="#lesson-1" class="active">
+      <span class="ln-num">02—01</span>
+      50/30/20 法則深度應用
+    </a>
+    <a href="#lesson-2">
+      <span class="ln-num">02—02</span>
+      找到適合你的記帳方式
+    </a>
+    <a href="#lesson-3">
+      <span class="ln-num">02—03</span>
+      消滅隱性支出的七種方法
+    </a>
+    <a href="#lesson-4">
+      <span class="ln-num">02—04</span>
+      打造自動理財系統
+    </a>
+  </aside>
+
+  <div class="lessons-content">
+
+    <!-- ════════════ LESSON 1 ════════════ -->
+    <section class="lesson" id="lesson-1">
+      <div class="lesson-header">
+        <div class="lesson-tag-row">
+          <span class="lesson-num-tag">Lesson 02—01</span>
+          <span class="lesson-duration">約 20 分鐘</span>
+        </div>
+        <h2 class="lesson-title">50/30/20 法則<br/>深度應用</h2>
+        <p class="lesson-subtitle">把複雜的預算管理簡化成一個三分法則。理解它的邏輯，學會根據自己的情況彈性調整，讓它真正為你所用。</p>
+      </div>
+
+      <div class="content-block">
+        <div class="block-label">法則的起源與核心邏輯</div>
+        <p class="body-text">50/30/20 法則由哈佛法學院教授、現任美國聯邦參議員伊莉莎白·華倫（Elizabeth Warren）在著作《All Your Worth》中提出。它的核心主張只有一句話：<strong>把稅後收入按照 50%、30%、20% 的比例，分別分配給「需要」、「想要」和「儲蓄與還債」三個桶子。</strong></p>
+        <p class="body-text">這個法則受歡迎的原因在於它夠簡單——你不需要追蹤每一筆支出的細目，只需要確保三個大類的比例大致在軌道上。對剛開始學習預算管理的人來說，它是最容易執行的起點。</p>
+      </div>
+
+      <div class="allocation-visual">
+        <div class="alloc-bar">
+          <div class="seg-need"></div>
+          <div class="seg-want"></div>
+          <div class="seg-save"></div>
+        </div>
+        <div class="alloc-rows">
+          <div class="alloc-row">
+            <div class="alloc-pct need">50%</div>
+            <div class="alloc-body">
+              <div class="alloc-name">需要 Needs</div>
+              <div class="alloc-desc">生活中必須支付、無法避免的基本開銷。即使你再節省，這些費用也不能不付。這個類別的上限是 50%，若超過代表生活成本結構需要調整。</div>
+            </div>
+            <div class="alloc-examples">
+              <div class="alloc-ex-label">包含項目</div>
+              <div class="alloc-ex-list">房租 / 房貸<br/>水電瓦斯網路<br/>飲食基本費用<br/>交通（通勤）<br/>基本醫療保險<br/>最低債務還款</div>
+            </div>
+          </div>
+          <div class="alloc-row">
+            <div class="alloc-pct want">30%</div>
+            <div class="alloc-body">
+              <div class="alloc-name">想要 Wants</div>
+              <div class="alloc-desc">讓生活更享受、但非必要的支出。這個類別的關鍵是「選擇性」——你可以決定要不要花，以及花多少。30% 是預算，也是你給自己的生活品質授權。</div>
+            </div>
+            <div class="alloc-examples">
+              <div class="alloc-ex-label">包含項目</div>
+              <div class="alloc-ex-list">外食 / 娛樂<br/>訂閱服務<br/>旅遊 / 休閒<br/>購物 / 服飾<br/>健身房會員<br/>嗜好消費</div>
+            </div>
+          </div>
+          <div class="alloc-row">
+            <div class="alloc-pct save">20%</div>
+            <div class="alloc-body">
+              <div class="alloc-name">儲蓄與還債 Savings</div>
+              <div class="alloc-desc">這是你為未來的自己付出的部分。包含緊急備用金的建立、投資帳戶的定期注入，以及超出最低還款額的額外債務清償。這個 20% 是財富積累的引擎。</div>
+            </div>
+            <div class="alloc-examples">
+              <div class="alloc-ex-label">包含項目</div>
+              <div class="alloc-ex-list">緊急備用金<br/>投資（ETF、基金）<br/>勞退自提<br/>額外還債金額<br/>退休專用儲蓄<br/>目標儲蓄帳戶</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="content-block">
+        <div class="block-label">根據收入與城市彈性調整</div>
+        <p class="body-text">50/30/20 是起點，而非鐵律。在台北市，房租往往佔薪資的 35–45%，若硬套 50% 規則，「需要」幾乎只剩下房租，其他生活費無從分配。<strong>法則應服務於你的現實，而非綁架你的現實。</strong>以下是幾種常見的調整方向：</p>
+      </div>
+
+      <div class="concept-list">
+        <div class="concept-item">
+          <div class="concept-term">高房租城市<br/>（台北、新北）</div>
+          <div class="concept-def">可調整為 60/20/20。在房租結構性偏高的情況下，先確保儲蓄的 20% 不妥協，壓縮的是「想要」的 30% 至 20%。或積極尋找共居、搬遷等方式降低固定成本。</div>
+        </div>
+        <div class="concept-item">
+          <div class="concept-term">高負債期間<br/>（信用卡、學貸）</div>
+          <div class="concept-def">可調整為 50/20/30，把「儲蓄與還債」的比例暫時提高至 30%，優先加速清償高利率債務。待負債清零後，再恢復或提升到標準比例。</div>
+        </div>
+        <div class="concept-item">
+          <div class="concept-term">接近財務自由者<br/>（目標儲蓄率 50%+）</div>
+          <div class="concept-def">可調整為 30/20/50，大幅壓縮生活成本，以追求更高儲蓄率。這是 FIRE 族群（提早退休運動）常採用的極端版本，需要有意識地重新定義「需要」的邊界。</div>
+        </div>
+      </div>
+
+      <div class="data-row">
+        <div class="data-cell">
+          <div class="data-num">3.4萬</div>
+          <div class="data-label">台灣受僱者<br/>中位數月薪（2024）</div>
+        </div>
+        <div class="data-cell">
+          <div class="data-num">1.7萬</div>
+          <div class="data-label">50% 規則下<br/>可用於需要的金額</div>
+        </div>
+        <div class="data-cell">
+          <div class="data-num">6,800</div>
+          <div class="data-label">20% 儲蓄規則<br/>每月投入金額</div>
+        </div>
+      </div>
+
+      <div class="takeaway">
+        <div class="takeaway-label">本單元核心結論</div>
+        <div class="takeaway-text">50/30/20 的價值不在於精確的數字，而在於它強迫你把收入分成三個用途明確的桶子。當你知道每一塊錢屬於哪個桶子，衝動消費就會自然減少——因為你看得見後果。</div>
+      </div>
+
+      <div class="tools-row">
+        <span class="tool-tag primary">50/30/20 個人化試算表</span>
+        <span class="tool-tag">收支分類速查卡</span>
+      </div>
+    </section>
+
+    <!-- ════════════ LESSON 2 ════════════ -->
+    <section class="lesson" id="lesson-2">
+      <div class="lesson-header">
+        <div class="lesson-tag-row">
+          <span class="lesson-num-tag">Lesson 02—02</span>
+          <span class="lesson-duration">約 20 分鐘</span>
+        </div>
+        <h2 class="lesson-title">找到適合你的<br/>記帳方式</h2>
+        <p class="lesson-subtitle">記帳不是折磨，是對自己財務生活的清醒認識。三種主流記帳法各有其適合的人格類型——找到適合你的，才能持續。</p>
+      </div>
+
+      <div class="content-block">
+        <div class="block-label">為何大多數人記帳三天打魚兩天曬網</div>
+        <p class="body-text">記帳失敗的首要原因，不是懶惰，而是<strong>使用了不適合自己個性的記帳方法</strong>。細節控硬套極簡記帳法，覺得不夠精確而放棄；隨性的人採用逐筆手寫記帳，三天後就嫌麻煩。找到與你的個性相符的方法，才是成功記帳的關鍵。</p>
+        <p class="body-text">以下三種方法涵蓋了從極簡到精細的完整光譜。閱讀每種方法的特性，選擇最符合你生活節奏的那一種，並承諾執行至少 90 天——習慣需要時間才能形成。</p>
+      </div>
+
+      <table class="compare-table">
+        <thead>
+          <tr>
+            <th>記帳方法</th>
+            <th>核心原則</th>
+            <th>適合族群</th>
+            <th>優點</th>
+            <th>缺點</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="td-method">零基預算法<br/><small style="font-family:monospace;font-size:11px;color:var(--ink-muted);">Zero-Based</small></td>
+            <td>收入 − 所有支出 = 0。每一分錢在月初就被指派任務，包括儲蓄。</td>
+            <td>喜歡掌控感、有財務焦慮、想知道每分錢去向的人。</td>
+            <td class="td-good">最精確、強迫你對每筆錢做決定、儲蓄自動被規劃進去。</td>
+            <td class="td-bad">每月月初需要較多時間規劃，非固定收入者執行難度較高。</td>
+          </tr>
+          <tr>
+            <td class="td-method">信封記帳法<br/><small style="font-family:monospace;font-size:11px;color:var(--ink-muted);">Envelope</small></td>
+            <td>把現金分裝進不同信封（或數位子帳戶），每個類別的錢用完就不再花。</td>
+            <td>信用卡消費容易失控、需要實體感知才能控制消費的人。</td>
+            <td class="td-good">視覺化直觀、有效控制衝動消費、不需要複雜計算。</td>
+            <td class="td-bad">現金社會正在消失，數位版需要多帳戶管理，初期設定較複雜。</td>
+          </tr>
+          <tr>
+            <td class="td-method">追蹤式記帳法<br/><small style="font-family:monospace;font-size:11px;color:var(--ink-muted);">Tracking</small></td>
+            <td>不設預算上限，只忠實記錄每一筆支出，月底回顧消費模式。</td>
+            <td>不喜歡被限制、但想了解自己消費行為的人；記帳初學者。</td>
+            <td class="td-good">低心理壓力、能快速找出消費盲點、是進入更精細預算法的好起點。</td>
+            <td class="td-bad">沒有強制約束力，單純記帳不一定改變行為，需要配合月底反思。</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="content-block">
+        <div class="block-label">數位記帳工具選擇指南</div>
+        <div class="concept-list">
+          <div class="concept-item">
+            <div class="concept-term">帳號自動同步型<br/>（Mint / 家計簿）</div>
+            <div class="concept-def">連結銀行和信用卡帳號，自動分類每筆消費。優點是省時，缺點是分類準確率約 80%，需要定期手動校正。適合收入固定、消費類型較規律的上班族。</div>
+          </div>
+          <div class="concept-item">
+            <div class="concept-term">手動輸入型<br/>（記帳城市、CWMoney）</div>
+            <div class="concept-def">每次消費後手動記錄金額與類別。強迫你在消費後立刻記帳，本身就是一種消費意識訓練。研究顯示，手動記帳者比自動同步型記帳者平均少花 15–20%。</div>
+          </div>
+          <div class="concept-item">
+            <div class="concept-term">試算表自建型<br/>（Google Sheets）</div>
+            <div class="concept-def">用 Google Sheets 或 Excel 自建記帳系統。完全客製化，可根據自己的分類邏輯設計。需要一定動力維持，但對喜歡數據分析的人來說是最有成就感的方式。</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="pull-quote">
+        <div class="pull-quote-text">「記帳不是要讓你對每筆消費感到罪惡，而是讓你對自己的選擇有意識。當你知道自己的錢去了哪裡，你才有能力決定它應該去哪裡。」</div>
+        <div class="pull-quote-source">— 理財行為研究者 Ramit Sethi</div>
+      </div>
+
+      <div class="content-block">
+        <div class="block-label">建立持續記帳習慣的四個訣竅</div>
+        <div class="steps">
+          <div class="step-item">
+            <div class="step-num">01</div>
+            <div class="step-content">
+              <div class="step-title">設定固定的「帳務時間」</div>
+              <div class="step-desc">每天固定一個 5 分鐘的帳務時段，例如睡前或午餐後。把記帳和一個已有的習慣掛鉤（習慣堆疊法），讓它自動成為日常流程的一部分，而非需要刻意想起的額外任務。</div>
+            </div>
+          </div>
+          <div class="step-item">
+            <div class="step-num">02</div>
+            <div class="step-content">
+              <div class="step-title">降低記帳的摩擦力</div>
+              <div class="step-desc">把記帳 App 放在手機第一頁最顯眼的位置。消費後 30 秒內記帳，比每天晚上回憶一整天的消費更準確，也更不容易遺漏。讓記帳的行動距離越短越好。</div>
+            </div>
+          </div>
+          <div class="step-item">
+            <div class="step-num">03</div>
+            <div class="step-content">
+              <div class="step-title">每月舉行一次「財務回顧會議」</div>
+              <div class="step-desc">每月月底花 20–30 分鐘，坐下來看上個月的記帳數據。這個儀式的目的不是評判自己，而是找出規律：哪個類別超支？哪裡有優化空間？下個月要調整什麼？</div>
+            </div>
+          </div>
+          <div class="step-item">
+            <div class="step-num">04</div>
+            <div class="step-content">
+              <div class="step-title">允許不完美，不要因為漏記而放棄</div>
+              <div class="step-desc">記帳失敗最常見的原因是「反正已經記漏了，乾脆放棄」。把漏記的幾天當作估算值填入，繼續前進。80% 的完整度，比 100% 的放棄，對財務健康的貢獻高出無數倍。</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="takeaway">
+        <div class="takeaway-label">本單元核心結論</div>
+        <div class="takeaway-text">最好的記帳方法，是你能持續執行的那一種。不要追求完美的記帳系統，要追求一個足夠好、能讓你堅持三個月以上的系統。習慣一旦形成，精確度自然會提升。</div>
+      </div>
+
+      <div class="tools-row">
+        <span class="tool-tag primary">月度記帳模板（Google Sheets）</span>
+        <span class="tool-tag">消費分類速查表</span>
+        <span class="tool-tag">月底財務回顧問題清單</span>
+      </div>
+    </section>
+
+    <!-- ════════════ LESSON 3 ════════════ -->
+    <section class="lesson" id="lesson-3">
+      <div class="lesson-header">
+        <div class="lesson-tag-row">
+          <span class="lesson-num-tag">Lesson 02—03</span>
+          <span class="lesson-duration">約 20 分鐘</span>
+        </div>
+        <h2 class="lesson-title">消滅隱性支出<br/>的七種方法</h2>
+        <p class="lesson-subtitle">每個月不知道錢花到哪裡去了？隱性支出是最難被察覺的財務漏洞，但也是最容易被堵住的一種。</p>
+      </div>
+
+      <div class="content-block">
+        <div class="block-label">什麼是隱性支出</div>
+        <p class="body-text">隱性支出（Silent Spending）是指那些金額小、頻率高、但從未被認真審視的消費——每天一杯咖啡、每月幾個忘記取消的訂閱、一週幾次的外送費、每逢特賣的小額衝動購物。單看每一筆都微不足道，但加總起來，往往是每月 5,000 至 20,000 元不等的無聲侵蝕。</p>
+        <p class="body-text">隱性支出的可怕之處在於它的<strong>「無痛感」</strong>。相比一次性大額支出帶來的明確感受，小額消費的分散性讓大腦幾乎無法感知它們的累積。這是消費心理學研究中「小額支出盲點」的核心發現。</p>
+      </div>
+
+      <div class="data-row">
+        <div class="data-cell">
+          <div class="data-num">7,200</div>
+          <div class="data-label">每天一杯咖啡（80 元）<br/>一年的總花費（元）</div>
+        </div>
+        <div class="data-cell">
+          <div class="data-num">4.3個</div>
+          <div class="data-label">台灣人平均持有<br/>的訂閱服務數量</div>
+        </div>
+        <div class="data-cell">
+          <div class="data-num">38%</div>
+          <div class="data-label">受訪者表示有忘記<br/>取消、持續扣款的訂閱</div>
+        </div>
+      </div>
+
+      <div class="content-block">
+        <div class="block-label">七種系統性消滅隱性支出的方法</div>
+        <div class="steps">
+          <div class="step-item">
+            <div class="step-num">01</div>
+            <div class="step-content">
+              <div class="step-title">訂閱服務全面審計</div>
+              <div class="step-desc">打開你的信用卡帳單，找出所有定期扣款的訂閱項目。建立一份清單，記下服務名稱、月費、上次使用日期。凡是超過 30 天未使用的訂閱，立即取消。這個步驟平均每人每月可節省 800–3,000 元。</div>
+            </div>
+          </div>
+          <div class="step-item">
+            <div class="step-num">02</div>
+            <div class="step-content">
+              <div class="step-title">外食支出的結構性分析</div>
+              <div class="step-desc">把外食分成三類：必要性外食（工作日午餐）、社交性外食（朋友聚會）、懶惰性外食（不想煮飯的外送）。前兩類接受，重點優化第三類。每週設定 2–3 個「自炊日」，比一味減少外食更容易持續。</div>
+            </div>
+          </div>
+          <div class="step-item">
+            <div class="step-num">03</div>
+            <div class="step-content">
+              <div class="step-title">便利商店消費意識化</div>
+              <div class="step-desc">便利商店是隱性支出的最大溫床之一。台灣人平均每週進入便利商店 5–7 次，每次平均消費 120–200 元，換算一年約 4–7 萬元。試行「只買預先計劃的商品，不買沒有計劃的商品」規則，持續一個月，觀察效果。</div>
+            </div>
+          </div>
+          <div class="step-item">
+            <div class="step-num">04</div>
+            <div class="step-content">
+              <div class="step-title">網購一鍵結帳的摩擦力設計</div>
+              <div class="step-desc">刪除瀏覽器儲存的信用卡資訊，要求每次結帳都需手動輸入卡號。研究顯示，這個簡單的摩擦力設計，可以讓衝動網購行為減少 30–40%。不方便不是壞事，它是你的保護機制。</div>
+            </div>
+          </div>
+          <div class="step-item">
+            <div class="step-num">05</div>
+            <div class="step-content">
+              <div class="step-title">制定「娛樂預算上限」</div>
+              <div class="step-desc">把串流平台、遊戲課金、演唱會、電影等所有娛樂消費合併計算，設定每月上限金額。在預算內，任何娛樂都是被允許的——這比什麼都不能買的禁慾模式更具可持續性。</div>
+            </div>
+          </div>
+          <div class="step-item">
+            <div class="step-num">06</div>
+            <div class="step-content">
+              <div class="step-title">通勤路線的消費陷阱規避</div>
+              <div class="step-desc">找出你每天通勤路線上的「消費觸發點」：路過的咖啡館、超商、夾娃娃機、手搖飲店。試著改變路線，或用不同的出入口，移除這些視覺觸發器。環境設計對行為的影響，遠超意志力的作用。</div>
+            </div>
+          </div>
+          <div class="step-item">
+            <div class="step-num">07</div>
+            <div class="step-content">
+              <div class="step-title">設定每月「零花錢帳戶」</div>
+              <div class="step-desc">每月撥出固定金額（例如 3,000 元）存入一個獨立的零花錢帳戶或電子錢包。這筆錢可以任意花，無需記帳、無需罪惡感——但一旦用完，當月不補充。這個設計同時保有自由感與邊界感。</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="highlight-box">
+        <div class="hl-label">隱性支出診斷：一個月實驗</div>
+        <div class="hl-text">
+          本月起，連續 30 天記錄所有低於 500 元的消費，並在月底將它們分類成「有計劃」與「無計劃」兩類。研究顯示，大多數人在做完這個實驗後，發現自己 <strong>30–45% 的小額消費</strong>屬於無計劃支出。這個數字本身，通常就足以促成行為改變。
+        </div>
+      </div>
+
+      <div class="takeaway">
+        <div class="takeaway-label">本單元核心結論</div>
+        <div class="takeaway-text">隱性支出的解決方案不是禁慾，而是意識化。當你開始看見它們，你就已經有了改變的力量。七種方法不需要同時執行，從你覺得最容易的一種開始，逐步建立節流習慣。</div>
+      </div>
+
+      <div class="tools-row">
+        <span class="tool-tag primary">訂閱服務審計清單</span>
+        <span class="tool-tag">隱性支出 30 天追蹤表</span>
+      </div>
+    </section>
+
+    <!-- ════════════ LESSON 4 ════════════ -->
+    <section class="lesson" id="lesson-4">
+      <div class="lesson-header">
+        <div class="lesson-tag-row">
+          <span class="lesson-num-tag">Lesson 02—04</span>
+          <span class="lesson-duration">約 20 分鐘</span>
+        </div>
+        <h2 class="lesson-title">打造<br/>自動理財系統</h2>
+        <p class="lesson-subtitle">最好的理財系統，是一個幾乎不需要你主動干預的系統。用自動化消除意志力消耗，讓正確的財務行為自動發生。</p>
+      </div>
+
+      <div class="content-block">
+        <div class="block-label">為何意志力是最不可靠的理財工具</div>
+        <p class="body-text">「我這個月一定要存到 1 萬元。」這句話背後的問題，是它依賴意志力——而意志力是一種有限且會隨著時間耗盡的資源。工作壓力大的月份、情緒低落的週末、年終特賣的誘惑……任何一個因素都可能讓意志力潰堤。</p>
+        <p class="body-text"><strong>自動化的核心邏輯是：把正確的財務決策變成系統的預設值，而非每次都需要主動做選擇的行為。</strong>當儲蓄在薪水入帳後自動轉走，你從來沒有機會「決定不儲蓄」，因此也就沒有機會失敗。</p>
+      </div>
+
+      <div class="content-block">
+        <div class="block-label">四帳戶自動理財架構</div>
+        <p class="body-text">以下是一套被廣泛採用的四帳戶系統。你需要在同一家銀行（或跨行搭配）開設四個功能明確的帳戶，並設定薪資入帳後的自動分配指令。</p>
+      </div>
+
+      <div class="account-diagram">
+        <div class="acct-box primary">
+          <div class="acct-label">薪資入帳帳戶</div>
+          <div class="acct-name">收入中樞</div>
+          <div class="acct-pct">100%</div>
+          <div class="acct-desc">所有收入的唯一入口。薪水入帳後，立即觸發自動分配。日常不使用此帳戶消費。</div>
+        </div>
+        <div class="acct-arrow">→</div>
+        <div class="acct-box">
+          <div class="acct-label">日常生活帳戶</div>
+          <div class="acct-name">生活費</div>
+          <div class="acct-pct">70–80%</div>
+          <div class="acct-desc">綁定日常消費的信用卡或金融卡。涵蓋所有「需要」與「想要」的支出。</div>
+        </div>
+        <div class="acct-arrow">→</div>
+        <div class="acct-box">
+          <div class="acct-label">緊急備用金帳戶</div>
+          <div class="acct-name">安全網</div>
+          <div class="acct-pct">5–10%</div>
+          <div class="acct-desc">建立 3–6 個月支出的緊急備用金。達標後停止注入，轉而增加投資比例。</div>
+        </div>
+        <div class="acct-arrow">→</div>
+        <div class="acct-box">
+          <div class="acct-label">投資帳戶</div>
+          <div class="acct-name">財富引擎</div>
+          <div class="acct-pct">10–20%</div>
+          <div class="acct-desc">連結證券帳戶，觸發定期定額扣款。長期投資，不受市場情緒影響，不隨意提領。</div>
+        </div>
+      </div>
+
+      <div class="content-block">
+        <div class="block-label">自動化系統的設定步驟</div>
+        <div class="steps">
+          <div class="step-item">
+            <div class="step-num">01</div>
+            <div class="step-content">
+              <div class="step-title">確認薪資入帳日期</div>
+              <div class="step-desc">確認你的薪資固定在哪一天入帳（例如每月 5 日）。所有自動轉帳指令，應設定在薪資入帳後的 1–2 個工作日內觸發，確保轉帳時帳戶已有足夠餘額。</div>
+            </div>
+          </div>
+          <div class="step-item">
+            <div class="step-num">02</div>
+            <div class="step-content">
+              <div class="step-title">設定自動轉帳至儲蓄與投資帳戶</div>
+              <div class="step-desc">至銀行網銀設定「定期自動轉帳」，在薪資入帳後隔天，自動將預設比例轉至緊急備用金帳戶與投資帳戶。這個步驟執行後，你的儲蓄就從「剩多少存多少」變成「優先存好再消費」。</div>
+            </div>
+          </div>
+          <div class="step-item">
+            <div class="step-num">03</div>
+            <div class="step-content">
+              <div class="step-title">設定投資帳戶的定期定額扣款</div>
+              <div class="step-desc">在你的券商帳戶設定定期定額，選定 ETF 標的（例如 0050 或 VT），設定每月固定扣款金額與扣款日。一旦設定完成，投資行為就從「每次都需要主動決策」變成「系統自動執行」。</div>
+            </div>
+          </div>
+          <div class="step-item">
+            <div class="step-num">04</div>
+            <div class="step-content">
+              <div class="step-title">設定帳單自動繳費</div>
+              <div class="step-desc">把所有固定帳單（電費、水費、網路費、保費、信用卡全額自動繳清）設定為自動扣款。消除「忘記繳費」的風險，同時避免信用卡循環利息，並節省大量時間。</div>
+            </div>
+          </div>
+          <div class="step-item">
+            <div class="step-num">05</div>
+            <div class="step-content">
+              <div class="step-title">每季檢視一次系統設定</div>
+              <div class="step-desc">自動化系統不是設定好就永遠不管。每季花 30 分鐘回顧：收入是否有變化？儲蓄比例是否需要提高？緊急備用金是否已達標、可以轉向更多投資？系統需要隨著財務狀況進化。</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="formula-block">
+        <span class="f-comment">// 自動理財系統公式（月薪 4 萬元示例）</span><br/><br/>
+        薪資入帳：<span class="f-highlight">40,000 元</span>（每月 5 日）<br/><br/>
+        <span class="f-comment">// 薪資入帳後第 6 日自動執行</span><br/>
+        → 緊急備用金帳戶：<span class="f-highlight">3,000 元</span>（7.5% — 建立期）<br/>
+        → 投資帳戶：<span class="f-highlight">5,000 元</span>（12.5%）<br/>
+        → 生活費帳戶：<span class="f-highlight">32,000 元</span>（80%）<br/><br/>
+        <span class="f-comment">// 生活費帳戶內再分配</span><br/>
+        → 固定支出自動繳費：約 <span class="f-highlight">18,000 元</span><br/>
+        → 可支配生活費：約 <span class="f-highlight">14,000 元</span>
+      </div>
+
+      <div class="content-block">
+        <div class="block-label">自動化系統的常見問題與對策</div>
+        <div class="checklist">
+          <div class="check-item">
+            <div class="check-mark"><div class="check-box"></div></div>
+            <div class="check-content">
+              <div class="check-title">收入不固定怎麼辦？（自由工作者 / 業務員）</div>
+              <div class="check-desc">以「最低月收入」作為基準設定自動化金額，而非平均收入。收入超出基準的部分，月底手動補充至投資帳戶。寧可每次手動轉帳多一點，也不要因為設定太高而導致帳戶餘額不足。</div>
+            </div>
+          </div>
+          <div class="check-item">
+            <div class="check-mark"><div class="check-box"></div></div>
+            <div class="check-content">
+              <div class="check-title">緊急備用金帳戶達標後如何調整？</div>
+              <div class="check-desc">當緊急備用金帳戶達到 3–6 個月支出的目標後，停止注入，把原本撥給它的比例（例如 7.5%）全部轉移至投資帳戶。儲蓄率從 20% 直接升級為 20%，無需重新設計系統。</div>
+            </div>
+          </div>
+          <div class="check-item">
+            <div class="check-mark"><div class="check-box"></div></div>
+            <div class="check-content">
+              <div class="check-title">加薪後系統如何升級？</div>
+              <div class="check-desc">遵循「加薪 50% 法則」：加薪金額的 50% 增加投資扣款，剩下 50% 才提高生活費預算。例如加薪 5,000 元，投資帳戶自動增加 2,500 元，生活費帳戶增加 2,500 元。財富積累速度隨收入加速，而非被生活膨脹抵銷。</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="takeaway">
+        <div class="takeaway-label">本單元核心結論</div>
+        <div class="takeaway-text">打造自動理財系統，是你這輩子對財務做出的最高效投資之一。設定它需要一個下午，但它將為你工作數十年。讓系統代替意志力做決定，才是長期財務成功的可靠路徑。</div>
+      </div>
+
+      <div class="tools-row">
+        <span class="tool-tag primary">四帳戶系統設定指南</span>
+        <span class="tool-tag">自動轉帳設定步驟說明</span>
+        <span class="tool-tag">月度財務系統檢視清單</span>
+        <span class="tool-tag">加薪升級計算表</span>
+      </div>
+    </section>
+
+  </div>
+</div>
+
+<!-- CHAPTER FOOTER -->
+<div class="chapter-footer">
+  <div>
+    <div class="cf-title">模組二 完成</div>
+    <h3 class="cf-heading">你的現金流系統已就位</h3>
+    <p class="cf-text">你現在掌握了 50/30/20 的分配邏輯、找到適合自己的記帳方式、學會識別並消滅隱性支出，並建立了一套自動理財架構。這四個工具組合在一起，是財富積累最堅實的地基。</p>
+    <div class="cf-nav-links">
+      <a class="cf-link prev" href="chapter1.html">返回模組一</a>
+      <a class="cf-link" href="chapter3.html">前往模組三</a>
+    </div>
+  </div>
+  <div>
+    <div class="cf-title">下一模組</div>
+    <h3 class="cf-heading">模組三：債務管理與信用建立</h3>
+    <p class="cf-text">有了穩定的現金流架構，下一步是處理債務這個財富積累最大的阻礙。你將學習好債壞債的判斷框架、雪球法與雪崩法的還債策略，以及如何建立有利於你的信用評分。</p>
+  </div>
+</div>
+
+<!-- SITE FOOTER -->
+<footer class="site-footer">
+  <div class="sf-logo">FINANCE<span>.</span>COURSE</div>
+  <div class="sf-copy">個人理財與資產配置基礎 · 模組二 / 共十模組</div>
+</footer>
+
+<script>
+  window.addEventListener('scroll', () => {
+    const el = document.documentElement;
+    const progress = el.scrollTop / (el.scrollHeight - el.clientHeight) * 100;
+    document.getElementById('progress-bar').style.width = progress + '%';
+  });
+
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+  }, { threshold: 0.07 });
+
+  document.querySelectorAll('.lesson').forEach(el => observer.observe(el));
+
+  const sideLinks = document.querySelectorAll('.lesson-nav a');
+  const topLinks  = document.querySelectorAll('.nav-links a[href^="#"]');
+
+  const sideObserver = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        const id = e.target.id;
+        sideLinks.forEach(a => a.classList.toggle('active', a.getAttribute('href') === '#' + id));
+        topLinks.forEach(a  => a.classList.toggle('active', a.getAttribute('href') === '#' + id));
+      }
+    });
+  }, { threshold: 0.45 });
+
+  document.querySelectorAll('.lesson').forEach(el => sideObserver.observe(el));
+</script>
+</body>
+</html>

@@ -1,0 +1,994 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>模組四：保險規劃——風險的價格</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@300;400;500;600;700;900&family=IBM+Plex+Mono:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --cream:        #F5F0E8;
+      --cream-dark:   #EDE6D6;
+      --cream-mid:    #E4DBC8;
+      --cream-border: #D0C4AC;
+      --ink:          #1A1510;
+      --ink-light:    #3D3228;
+      --ink-muted:    #7A6E62;
+      --red:          #C0392B;
+      --red-dark:     #96281B;
+      --red-wash:     #F0E0DD;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; font-size: 16px; }
+
+    body {
+      background: var(--cream);
+      color: var(--ink);
+      font-family: 'Noto Serif TC', Georgia, serif;
+      line-height: 1.8;
+      overflow-x: hidden;
+    }
+
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 9000;
+    }
+
+    #progress-bar {
+      position: fixed;
+      top: 0; left: 0;
+      height: 2px;
+      background: var(--red);
+      z-index: 9999;
+      transition: width 0.08s linear;
+    }
+
+    /* ── TOP NAV ── */
+    .top-nav {
+      position: sticky; top: 0; z-index: 500;
+      background: var(--cream-dark);
+      border-bottom: 1px solid var(--cream-border);
+      padding: 0 60px;
+      display: flex; align-items: center; justify-content: space-between;
+      height: 52px;
+    }
+    .nav-breadcrumb { font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.14em; color: var(--ink-muted); text-transform: uppercase; }
+    .nav-breadcrumb span { color: var(--red); }
+    .nav-links { display: flex; }
+    .nav-links a {
+      font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.12em;
+      text-transform: uppercase; color: var(--ink-muted); text-decoration: none;
+      padding: 0 20px; height: 52px; display: flex; align-items: center;
+      border-left: 1px solid var(--cream-border); transition: color 0.2s, background 0.2s;
+    }
+    .nav-links a:hover { color: var(--ink); background: var(--cream-mid); }
+    .nav-links a.active { color: var(--red); }
+
+    /* ── HERO ── */
+    .hero { padding: 100px 60px 80px; border-bottom: 2px solid var(--ink); position: relative; overflow: hidden; }
+    .hero-rule { position: absolute; top: 44px; left: 60px; right: 60px; height: 1px; background: var(--ink); }
+    .hero-meta { font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-muted); margin-bottom: 32px; display: flex; align-items: center; gap: 20px; }
+    .hero-meta .dot { width: 4px; height: 4px; background: var(--red); display: inline-block; }
+    .hero-meta .mod-label { color: var(--red); font-weight: 500; }
+    .hero-title { font-size: clamp(40px, 7vw, 88px); font-weight: 900; line-height: 1.0; letter-spacing: -0.025em; max-width: 900px; }
+    .hero-title .line2 { display: block; color: var(--red); }
+    .hero-deck { margin-top: 28px; max-width: 600px; font-size: 17px; font-weight: 300; color: var(--ink-light); line-height: 1.9; }
+    .hero-meta-bottom { margin-top: 48px; display: flex; gap: 40px; }
+    .meta-item { display: flex; flex-direction: column; gap: 4px; }
+    .meta-label { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--ink-muted); }
+    .meta-value { font-family: 'IBM Plex Mono', monospace; font-size: 18px; font-weight: 600; color: var(--ink); }
+    .hero-number { position: absolute; right: 60px; bottom: -20px; font-family: 'IBM Plex Mono', monospace; font-size: 220px; font-weight: 600; color: var(--cream-border); line-height: 1; user-select: none; pointer-events: none; letter-spacing: -0.05em; }
+
+    /* ── LAYOUT ── */
+    .page-body { display: grid; grid-template-columns: 220px 1fr; }
+
+    /* ── SIDEBAR ── */
+    .lesson-nav { border-right: 1px solid var(--cream-border); padding: 48px 28px; position: sticky; top: 52px; height: calc(100vh - 52px); overflow-y: auto; background: var(--cream-dark); }
+    .lesson-nav-title { font-family: 'IBM Plex Mono', monospace; font-size: 9px; letter-spacing: 0.25em; text-transform: uppercase; color: var(--ink-muted); margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px solid var(--cream-border); }
+    .lesson-nav a { display: block; padding: 10px 0; font-size: 13px; font-weight: 500; color: var(--ink-muted); text-decoration: none; transition: color 0.18s; line-height: 1.45; border-bottom: 1px solid var(--cream-border); }
+    .lesson-nav a:last-child { border-bottom: none; }
+    .lesson-nav a:hover { color: var(--ink); }
+    .lesson-nav a.active { color: var(--red); }
+    .lesson-nav .ln-num { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.1em; color: var(--cream-border); display: block; margin-bottom: 2px; transition: color 0.18s; }
+    .lesson-nav a.active .ln-num { color: var(--red); }
+    .lesson-nav a:hover .ln-num { color: var(--ink-muted); }
+
+    /* ── LESSON ── */
+    .lessons-content { padding: 0; }
+    .lesson { padding: 80px 80px 72px; border-bottom: 1px solid var(--cream-border); opacity: 0; transform: translateY(18px); transition: opacity 0.55s ease, transform 0.55s ease; }
+    .lesson.visible { opacity: 1; transform: translateY(0); }
+    .lesson:nth-child(even) { background: var(--cream-dark); }
+
+    .lesson-header { margin-bottom: 52px; padding-bottom: 36px; border-bottom: 1px solid var(--cream-border); }
+    .lesson-tag-row { display: flex; align-items: center; gap: 16px; margin-bottom: 16px; }
+    .lesson-num-tag { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--red); font-weight: 500; }
+    .lesson-duration { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.15em; color: var(--ink-muted); }
+    .lesson-title { font-size: clamp(22px, 3vw, 34px); font-weight: 700; line-height: 1.25; letter-spacing: -0.01em; margin-bottom: 12px; }
+    .lesson-subtitle { font-size: 15px; font-weight: 300; color: var(--ink-muted); line-height: 1.7; max-width: 560px; }
+
+    /* ── CONTENT BLOCKS ── */
+    .content-block { margin-bottom: 48px; }
+    .block-label { font-family: 'IBM Plex Mono', monospace; font-size: 9px; letter-spacing: 0.28em; text-transform: uppercase; color: var(--ink-muted); margin-bottom: 16px; padding-bottom: 8px; border-bottom: 1px solid var(--cream-border); }
+    .body-text { font-size: 15.5px; line-height: 2.0; color: var(--ink-light); }
+    .body-text + .body-text { margin-top: 20px; }
+    .body-text strong { color: var(--ink); font-weight: 600; }
+
+    .pull-quote { margin: 40px 0; padding: 28px 0 28px 36px; border-left: 3px solid var(--red); }
+    .pull-quote-text { font-size: 19px; font-weight: 500; line-height: 1.7; color: var(--ink); font-style: italic; }
+    .pull-quote-source { margin-top: 12px; font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.1em; color: var(--red); }
+
+    .data-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--cream-border); border: 1px solid var(--cream-border); margin: 36px 0; }
+    .data-cell { background: var(--cream); padding: 28px; transition: background 0.2s; }
+    .lesson:nth-child(even) .data-cell { background: var(--cream-dark); }
+    .data-cell:hover { background: var(--red-wash); }
+    .data-num { font-family: 'IBM Plex Mono', monospace; font-size: 36px; font-weight: 600; color: var(--red); line-height: 1; margin-bottom: 8px; }
+    .data-label { font-size: 13px; color: var(--ink-muted); line-height: 1.5; }
+
+    .concept-list { margin: 28px 0; border: 1px solid var(--cream-border); }
+    .concept-item { display: grid; grid-template-columns: 200px 1fr; border-bottom: 1px solid var(--cream-border); }
+    .concept-item:last-child { border-bottom: none; }
+    .concept-term { padding: 20px 24px; font-weight: 600; font-size: 14px; line-height: 1.5; border-right: 1px solid var(--cream-border); background: var(--cream-mid); }
+    .concept-def { padding: 20px 28px; font-size: 14px; color: var(--ink-muted); line-height: 1.7; }
+
+    .steps { margin: 28px 0; }
+    .step-item { display: grid; grid-template-columns: 52px 1fr; border-bottom: 1px solid var(--cream-border); }
+    .step-item:first-child { border-top: 1px solid var(--cream-border); }
+    .step-num { font-family: 'IBM Plex Mono', monospace; font-size: 11px; font-weight: 600; color: var(--cream); background: var(--ink); display: flex; align-items: center; justify-content: center; padding: 20px 0; }
+    .step-content { padding: 20px 28px; }
+    .step-title { font-size: 15px; font-weight: 600; margin-bottom: 6px; }
+    .step-desc { font-size: 13.5px; color: var(--ink-muted); line-height: 1.7; }
+
+    .highlight-box { background: var(--ink); color: var(--cream); padding: 36px 40px; margin: 36px 0; }
+    .highlight-box .hl-label { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--red); margin-bottom: 14px; }
+    .highlight-box .hl-text { font-size: 15px; line-height: 1.9; color: rgba(245,240,232,0.82); }
+    .highlight-box .hl-text strong { color: var(--cream); }
+
+    .formula-block { font-family: 'IBM Plex Mono', monospace; background: var(--cream-mid); border: 1px solid var(--cream-border); padding: 28px 32px; margin: 28px 0; font-size: 14px; line-height: 2.1; color: var(--ink); }
+    .formula-block .f-comment { color: var(--ink-muted); font-size: 12px; }
+    .formula-block .f-highlight { color: var(--red); font-weight: 600; }
+    .formula-block .f-good { color: var(--ink); font-weight: 600; }
+
+    .takeaway { margin-top: 48px; padding-top: 32px; border-top: 2px solid var(--ink); }
+    .takeaway-label { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.25em; text-transform: uppercase; color: var(--red); margin-bottom: 14px; }
+    .takeaway-text { font-size: 17px; font-weight: 500; font-style: italic; color: var(--ink); line-height: 1.75; }
+
+    .tools-row { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 40px; padding-top: 28px; border-top: 1px solid var(--cream-border); }
+    .tool-tag { font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.06em; padding: 6px 16px; border: 1px solid var(--cream-border); color: var(--ink-muted); }
+    .tool-tag.primary { border-color: var(--red); color: var(--red); background: var(--red-wash); }
+
+    /* ── RISK MATRIX ── */
+    .risk-matrix {
+      margin: 36px 0;
+      border: 1px solid var(--cream-border);
+    }
+    .risk-matrix-header {
+      display: grid;
+      grid-template-columns: 140px 1fr 1fr;
+      background: var(--ink);
+    }
+    .risk-matrix-header div {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      padding: 13px 20px;
+      color: rgba(245,240,232,0.7);
+      border-right: 1px solid rgba(255,255,255,0.08);
+    }
+    .risk-matrix-header div:last-child { border-right: none; }
+    .risk-matrix-row {
+      display: grid;
+      grid-template-columns: 140px 1fr 1fr;
+      border-bottom: 1px solid var(--cream-border);
+    }
+    .risk-matrix-row:last-child { border-bottom: none; }
+    .risk-cell {
+      padding: 18px 20px;
+      font-size: 13.5px;
+      color: var(--ink-light);
+      line-height: 1.6;
+      border-right: 1px solid var(--cream-border);
+    }
+    .risk-cell:last-child { border-right: none; }
+    .risk-cell.label { font-weight: 700; color: var(--ink); font-size: 14px; background: var(--cream-mid); }
+    .risk-cell.action-buy { color: var(--red); font-weight: 600; }
+    .risk-cell.action-skip { color: var(--ink-muted); }
+
+    /* ── INSURANCE CARDS ── */
+    .insurance-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1px;
+      background: var(--cream-border);
+      border: 1px solid var(--cream-border);
+      margin: 28px 0;
+    }
+    .ins-card {
+      background: var(--cream);
+      padding: 28px 28px 24px;
+    }
+    .lesson:nth-child(even) .ins-card { background: var(--cream-dark); }
+    .ins-card-num {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.2em;
+      color: var(--red);
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+    .ins-card-name {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 6px;
+      line-height: 1.2;
+    }
+    .ins-card-sub {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 11px;
+      color: var(--ink-muted);
+      letter-spacing: 0.08em;
+      margin-bottom: 16px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid var(--cream-border);
+    }
+    .ins-card-body { font-size: 13.5px; color: var(--ink-muted); line-height: 1.75; margin-bottom: 16px; }
+    .ins-card-rows { display: flex; flex-direction: column; gap: 0; }
+    .ins-card-row {
+      display: grid;
+      grid-template-columns: 80px 1fr;
+      border-top: 1px solid var(--cream-border);
+      font-size: 12.5px;
+    }
+    .ins-card-row-label {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--ink-muted);
+      padding: 10px 0 10px 0;
+      border-right: 1px solid var(--cream-border);
+      padding-right: 8px;
+    }
+    .ins-card-row-val {
+      padding: 10px 0 10px 12px;
+      color: var(--ink-light);
+      line-height: 1.5;
+    }
+    .ins-card-row-val strong { color: var(--ink); font-weight: 600; }
+
+    /* ── TRAP TABLE ── */
+    .trap-table { margin: 28px 0; border: 1px solid var(--cream-border); width: 100%; }
+    .trap-table thead tr { background: var(--ink); color: var(--cream); }
+    .trap-table th { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; padding: 13px 18px; text-align: left; font-weight: 500; border-right: 1px solid rgba(255,255,255,0.1); }
+    .trap-table th:last-child { border-right: none; }
+    .trap-table td { font-size: 13.5px; padding: 16px 18px; border-right: 1px solid var(--cream-border); border-bottom: 1px solid var(--cream-border); color: var(--ink-light); vertical-align: top; line-height: 1.65; }
+    .trap-table td:last-child { border-right: none; }
+    .trap-table tr:last-child td { border-bottom: none; }
+    .trap-table tr:nth-child(even) td { background: var(--cream-dark); }
+    .trap-table .td-trap { font-weight: 600; color: var(--red); font-size: 13px; }
+    .trap-table .td-truth { color: var(--ink-light); }
+    .trap-table .td-action { color: var(--ink); font-weight: 500; font-size: 12.5px; }
+
+    /* ── LIFECYCLE TABLE ── */
+    .lifecycle-table { margin: 28px 0; border: 1px solid var(--cream-border); }
+    .lifecycle-row {
+      display: grid;
+      grid-template-columns: 120px 1fr 1fr 1fr;
+      border-bottom: 1px solid var(--cream-border);
+    }
+    .lifecycle-row:last-child { border-bottom: none; }
+    .lifecycle-row.header { background: var(--ink); }
+    .lifecycle-cell {
+      padding: 16px 18px;
+      font-size: 13.5px;
+      color: var(--ink-light);
+      border-right: 1px solid var(--cream-border);
+      line-height: 1.6;
+      vertical-align: top;
+    }
+    .lifecycle-cell:last-child { border-right: none; }
+    .lifecycle-row.header .lifecycle-cell {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: rgba(245,240,232,0.7);
+      border-right-color: rgba(255,255,255,0.08);
+    }
+    .lifecycle-cell.stage { font-weight: 700; color: var(--ink); background: var(--cream-mid); font-size: 14px; }
+    .lifecycle-cell .priority { color: var(--red); font-weight: 600; font-size: 13px; }
+    .lifecycle-cell .secondary { color: var(--ink-muted); font-size: 12.5px; margin-top: 4px; }
+
+    /* ── CHAPTER FOOTER ── */
+    .chapter-footer { background: var(--ink); color: var(--cream); padding: 72px 80px; display: grid; grid-template-columns: 1fr 1fr; gap: 80px; }
+    .cf-title { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--red); margin-bottom: 16px; }
+    .cf-heading { font-size: 22px; font-weight: 700; line-height: 1.3; margin-bottom: 16px; }
+    .cf-text { font-size: 14px; color: rgba(245,240,232,0.6); line-height: 1.85; }
+    .cf-nav-links { display: flex; gap: 32px; margin-top: 24px; }
+    .cf-link { font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--cream); text-decoration: none; border-bottom: 1px solid var(--red); padding-bottom: 2px; transition: color 0.2s; }
+    .cf-link:hover { color: var(--red); }
+    .cf-link.prev { border-color: rgba(245,240,232,0.3); }
+    .cf-link.prev:hover { border-color: var(--red); color: var(--red); }
+
+    /* ── SITE FOOTER ── */
+    .site-footer { padding: 24px 60px; border-top: 1px solid var(--cream-border); display: flex; justify-content: space-between; align-items: center; background: var(--cream-dark); }
+    .sf-logo { font-family: 'IBM Plex Mono', monospace; font-size: 12px; font-weight: 600; letter-spacing: 0.1em; }
+    .sf-logo span { color: var(--red); }
+    .sf-copy { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--ink-muted); }
+
+    .lesson-nav::-webkit-scrollbar { width: 3px; }
+    .lesson-nav::-webkit-scrollbar-thumb { background: var(--cream-border); }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 1024px) {
+      .page-body { grid-template-columns: 1fr; }
+      .lesson-nav { display: none; }
+      .lesson { padding: 56px 40px; }
+      .hero { padding: 72px 40px 60px; }
+      .hero-rule { left: 40px; right: 40px; }
+      .chapter-footer { padding: 56px 40px; gap: 48px; }
+      .site-footer { padding: 20px 40px; }
+      .top-nav { padding: 0 40px; }
+      .insurance-grid { grid-template-columns: 1fr; }
+      .lifecycle-row { grid-template-columns: 100px 1fr 1fr; }
+      .lifecycle-cell:nth-child(4) { display: none; }
+      .lifecycle-row.header .lifecycle-cell:nth-child(4) { display: none; }
+    }
+    @media (max-width: 640px) {
+      .hero { padding: 56px 24px 48px; }
+      .hero-rule { left: 24px; right: 24px; }
+      .hero-number { display: none; }
+      .hero-meta { flex-wrap: wrap; }
+      .lesson { padding: 40px 24px; }
+      .data-row { grid-template-columns: 1fr; }
+      .concept-item { grid-template-columns: 1fr; }
+      .concept-term { border-right: none; border-bottom: 1px solid var(--cream-border); }
+      .risk-matrix-row { grid-template-columns: 100px 1fr 1fr; }
+      .risk-matrix-header { grid-template-columns: 100px 1fr 1fr; }
+      .lifecycle-row { grid-template-columns: 1fr; }
+      .lifecycle-cell { border-right: none; border-bottom: 1px solid var(--cream-border); }
+      .lifecycle-cell:last-child { border-bottom: none; }
+      .lifecycle-row.header { display: none; }
+      .chapter-footer { grid-template-columns: 1fr; gap: 40px; padding: 40px 24px; }
+      .site-footer { padding: 20px 24px; flex-direction: column; gap: 8px; text-align: center; }
+      .top-nav { padding: 0 20px; }
+      .nav-links { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<div id="progress-bar"></div>
+
+<!-- TOP NAV -->
+<nav class="top-nav">
+  <div class="nav-breadcrumb">個人理財課程 / <span>模組四</span></div>
+  <div class="nav-links">
+    <a href="index.html">課程目錄</a>
+    <a href="chapter3.html">模組三</a>
+    <a href="#lesson-1" class="active">單元 01</a>
+    <a href="#lesson-2">單元 02</a>
+    <a href="#lesson-3">單元 03</a>
+    <a href="#lesson-4">單元 04</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<header class="hero">
+  <div class="hero-rule"></div>
+  <div class="hero-meta">
+    <span class="mod-label">Module 04</span>
+    <span class="dot"></span>
+    <span>Insurance</span>
+    <span class="dot"></span>
+    <span>保險規劃</span>
+  </div>
+  <h1 class="hero-title">
+    保險規劃
+    <span class="line2">風險的價格</span>
+  </h1>
+  <p class="hero-deck">保險不是投資，而是轉移你無法自行承擔的財務風險的工具。這個模組教你用邏輯而非情緒購買保險：何時該買、買什麼、買多少，以及如何識破讓你多花冤枉錢的話術陷阱。</p>
+  <div class="hero-meta-bottom">
+    <div class="meta-item">
+      <span class="meta-label">單元數</span>
+      <span class="meta-value">04</span>
+    </div>
+    <div class="meta-item">
+      <span class="meta-label">學習時間</span>
+      <span class="meta-value">82 min</span>
+    </div>
+    <div class="meta-item">
+      <span class="meta-label">難度</span>
+      <span class="meta-value">初中級</span>
+    </div>
+    <div class="meta-item">
+      <span class="meta-label">附件</span>
+      <span class="meta-value">3 份</span>
+    </div>
+  </div>
+  <div class="hero-number">04</div>
+</header>
+
+<!-- PAGE BODY -->
+<div class="page-body">
+
+  <aside class="lesson-nav">
+    <div class="lesson-nav-title">本章單元</div>
+    <a href="#lesson-1" class="active">
+      <span class="ln-num">04—01</span>
+      保險的本質：風險轉移邏輯
+    </a>
+    <a href="#lesson-2">
+      <span class="ln-num">04—02</span>
+      四大基礎保險完全解析
+    </a>
+    <a href="#lesson-3">
+      <span class="ln-num">04—03</span>
+      識破保險業務的話術陷阱
+    </a>
+    <a href="#lesson-4">
+      <span class="ln-num">04—04</span>
+      人生各階段的保障調整策略
+    </a>
+  </aside>
+
+  <div class="lessons-content">
+
+    <!-- ════════════════════════════════ LESSON 1 ════════════════════════════════ -->
+    <section class="lesson" id="lesson-1">
+      <div class="lesson-header">
+        <div class="lesson-tag-row">
+          <span class="lesson-num-tag">Lesson 04—01</span>
+          <span class="lesson-duration">約 20 分鐘</span>
+        </div>
+        <h2 class="lesson-title">保險的本質<br/>風險轉移邏輯</h2>
+        <p class="lesson-subtitle">在你花第一分錢買保險之前，先理解保險存在的唯一理由，以及一個能讓所有保險決策變得清晰的核心問題。</p>
+      </div>
+
+      <div class="content-block">
+        <div class="block-label">保險的經濟學本質</div>
+        <p class="body-text">從保險公司的角度來看，保險是一門可以長期盈利的生意——這意味著從統計上，所有投保人繳的保費總和，永遠大於保險公司支付的理賠總額。<strong>換句話說，「保費」是你為了轉移風險而支付給保險公司的成本，平均而言你拿到的理賠，少於你繳出去的保費。</strong></p>
+        <p class="body-text">這個事實不是要你不買保險，而是要你理解保險的正確用途：它是一種<strong>風險轉移工具</strong>，不是財富增值工具。你購買保險的唯一合理理由，是把你「無法承受」的損失風險，以可接受的費用轉移給保險公司。</p>
+      </div>
+
+      <div class="pull-quote">
+        <div class="pull-quote-text">「用保險保障你無法承受的損失，用投資累積你的財富。把這兩件事混在一起，通常兩件都做不好。」</div>
+        <div class="pull-quote-source">— 個人理財黃金原則</div>
+      </div>
+
+      <div class="content-block">
+        <div class="block-label">一個問題決定你是否需要買保險</div>
+        <p class="body-text">面對任何保險購買決定，只需要問自己一個問題：<strong>「如果這個風險發生，我能否用自己的財力承擔損失？」</strong></p>
+        <p class="body-text">若答案是「否」——損失大到足以摧毀你的財務生活——那就是你需要保險的情況。若答案是「是」——損失在你的財力可控範圍內——那就是你可以選擇不買保險、自留風險的情況。</p>
+      </div>
+
+      <div class="risk-matrix">
+        <div class="risk-matrix-header">
+          <div>風險情境</div>
+          <div>損失規模</div>
+          <div>保險建議</div>
+        </div>
+        <div class="risk-matrix-row">
+          <div class="risk-cell label">死亡<br/>（有撫養責任）</div>
+          <div class="risk-cell">家庭收入中斷，撫養責任無法延續，可能造成配偶和子女長達數十年的財務危機。損失規模：數百萬至數千萬元的替代收入需求。</div>
+          <div class="risk-cell action-buy">強烈建議購買定期壽險，保額至少為年收入的 10–15 倍。</div>
+        </div>
+        <div class="risk-matrix-row">
+          <div class="risk-cell label">重大疾病<br/>/ 住院</div>
+          <div class="risk-cell">醫療費用高昂，加上長期無法工作的收入損失，可能在數月內耗盡數年積蓄。損失規模：數十萬至數百萬元。</div>
+          <div class="risk-cell action-buy">強烈建議購買實支實付醫療險與重大傷病險，作為健保的補充。</div>
+        </div>
+        <div class="risk-matrix-row">
+          <div class="risk-cell label">長期失能<br/>（工作能力喪失）</div>
+          <div class="risk-cell">完全喪失工作能力，卻仍需生活費用長達數十年。損失規模：可能超過數千萬元的終生收入損失，是被最低估的風險。</div>
+          <div class="risk-cell action-buy">強烈建議購買失能險，但台灣市場供給有限，需積極規劃。</div>
+        </div>
+        <div class="risk-matrix-row">
+          <div class="risk-cell label">手機遺失<br/>/ 小額財損</div>
+          <div class="risk-cell">損失規模：數千至數萬元，在大多數人的財力可承受範圍內。這類風險可用緊急備用金自行應對。</div>
+          <div class="risk-cell action-skip">通常不需要購買專項保險，自留風險更具成本效益。</div>
+        </div>
+        <div class="risk-matrix-row">
+          <div class="risk-cell label">汽車意外<br/>/ 第三方責任</div>
+          <div class="risk-cell">若涉及他人人身傷亡，賠償金額可能高達數百萬。車體損失則通常在財力可控範圍。</div>
+          <div class="risk-cell action-buy">強制險為法律要求；第三方責任險建議購買；車體險視車輛價值與財力決定。</div>
+        </div>
+      </div>
+
+      <div class="content-block">
+        <div class="block-label">「保費預算」的分配原則</div>
+        <p class="body-text">台灣保險業者建議的保費支出佔收入比例為 10–15%，但這個數字往往過高，且鼓勵購買不必要的保險商品。更理性的做法是：<strong>以滿足核心風險保障為前提，用最低的保費達到足夠的保障</strong>，把省下的資金投入投資。</p>
+        <p class="body-text">一般上班族的合理保費預算，通常在月收入的 5–8% 之間，就足以涵蓋所有核心風險保障。超出這個範圍的保費，往往是花在了投資型、儲蓄型等保費昂貴但保障相對有限的商品上。</p>
+      </div>
+
+      <div class="formula-block">
+        <span class="f-comment">// 月薪 4 萬元的合理保費預算參考</span><br/><br/>
+        月薪：<span class="f-good">40,000 元</span><br/><br/>
+        保費預算上限（8%）：<span class="f-good">3,200 元 / 月</span><br/><br/>
+        <span class="f-comment">// 核心保障配置建議（單身無撫養責任）</span><br/>
+        意外險（500 萬保額）：<span class="f-good">約 500–800 元 / 年</span><br/>
+        實支實付醫療險：<span class="f-good">約 3,000–5,000 元 / 年</span><br/>
+        失能險（月給付 3 萬）：<span class="f-good">約 6,000–10,000 元 / 年</span><br/><br/>
+        合計：<span class="f-highlight">約 9,500–15,800 元 / 年（月均 790–1,317 元）</span><br/>
+        <span class="f-comment">// 遠低於月薪 8% 的上限，剩餘資金可投資</span>
+      </div>
+
+      <div class="takeaway">
+        <div class="takeaway-label">本單元核心結論</div>
+        <div class="takeaway-text">保險的存在理由只有一個：把你無法自行承擔的損失風險，以合理費用轉移出去。凡是自己能承擔的風險，都不需要花錢讓保險公司幫你承擔。清楚這個邏輯，所有保險決策都會變得更簡單。</div>
+      </div>
+
+      <div class="tools-row">
+        <span class="tool-tag primary">個人風險評估工作表</span>
+        <span class="tool-tag">保費預算計算表</span>
+      </div>
+    </section>
+
+    <!-- ════════════════════════════════ LESSON 2 ════════════════════════════════ -->
+    <section class="lesson" id="lesson-2">
+      <div class="lesson-header">
+        <div class="lesson-tag-row">
+          <span class="lesson-num-tag">Lesson 04—02</span>
+          <span class="lesson-duration">約 22 分鐘</span>
+        </div>
+        <h2 class="lesson-title">四大基礎保險<br/>完全解析</h2>
+        <p class="lesson-subtitle">台灣人必須優先考慮的四種保險，各有其保障邏輯與選購重點。了解每一種，才能做出不後悔的配置決策。</p>
+      </div>
+
+      <div class="content-block">
+        <div class="block-label">四大核心保障的優先順序</div>
+        <p class="body-text">在有限的保費預算下，必須有選擇的優先順序。以下四種保險按照「保障必要性 × 自行承擔難度」排列，第一優先是大多數台灣人在現有健保制度下最容易忽略但最需要補足的缺口。</p>
+      </div>
+
+      <div class="insurance-grid">
+
+        <div class="ins-card">
+          <div class="ins-card-num">Priority 01 — 失能險</div>
+          <div class="ins-card-name">失能保險</div>
+          <div class="ins-card-sub">Income Protection · 收入保護</div>
+          <div class="ins-card-body">失能是台灣最被低估的財務風險。統計顯示，65 歲前發生長期失能的機率，遠高於死亡機率。一旦完全失去工作能力，你的收入歸零，但生活費用不減，且可能持續數十年。失能險的作用是替代你喪失的收入，確保財務不崩潰。</div>
+          <div class="ins-card-rows">
+            <div class="ins-card-row">
+              <div class="ins-card-row-label">保障內容</div>
+              <div class="ins-card-row-val">因疾病或意外導致身體失能，每月給付固定生活費（通常為月薪的 60–80%）直到康復或至一定年齡。</div>
+            </div>
+            <div class="ins-card-row">
+              <div class="ins-card-row-label">建議保額</div>
+              <div class="ins-card-row-val"><strong>月給付金額 = 月支出 × 1.2</strong>，確保失能後仍可維持基本生活水準。</div>
+            </div>
+            <div class="ins-card-row">
+              <div class="ins-card-row-label">注意事項</div>
+              <div class="ins-card-row-val">台灣市場供給有限，部分保險公司已停售。應盡早投保，年輕時核保容易、保費低廉。</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="ins-card">
+          <div class="ins-card-num">Priority 02 — 醫療險</div>
+          <div class="ins-card-name">實支實付醫療保險</div>
+          <div class="ins-card-sub">Medical Insurance · 醫療補償</div>
+          <div class="ins-card-body">台灣健保雖然完善，但自費項目日益增多：新式手術耗材、單人房差額、特殊藥物，動輒數萬至數十萬元。實支實付醫療險以「實際花了多少、賠多少」的邏輯運作，是填補健保缺口的最有效工具，也是CP值最高的醫療保障。</div>
+          <div class="ins-card-rows">
+            <div class="ins-card-row">
+              <div class="ins-card-row-label">建議類型</div>
+              <div class="ins-card-row-val"><strong>實支實付型</strong>優先於日額型。日額型給付固定金額，實支型才能真正反映實際醫療費用。</div>
+            </div>
+            <div class="ins-card-row">
+              <div class="ins-card-row-label">建議保額</div>
+              <div class="ins-card-row-val">雜費限額至少 15–20 萬元。可考慮同時投保兩張實支實付（副本理賠），進一步擴大保障。</div>
+            </div>
+            <div class="ins-card-row">
+              <div class="ins-card-row-label">注意事項</div>
+              <div class="ins-card-row-val">確認條款是否涵蓋「門診手術」，近年許多手術改為日間手術，若只涵蓋住院可能理賠不到。</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="ins-card">
+          <div class="ins-card-num">Priority 03 — 壽險</div>
+          <div class="ins-card-name">定期壽險</div>
+          <div class="ins-card-sub">Term Life Insurance · 身故保障</div>
+          <div class="ins-card-body">壽險的存在理由只有一個：當你身故，確保你的財務責任不落在家人身上。因此，<strong>沒有撫養責任的人，不需要壽險。</strong>有撫養責任者（有配偶、子女、需照顧的父母），應購買定期壽險，而非終身壽險——前者保費便宜數倍，把省下的保費投資更划算。</div>
+          <div class="ins-card-rows">
+            <div class="ins-card-row">
+              <div class="ins-card-row-label">建議類型</div>
+              <div class="ins-card-row-val"><strong>定期壽險</strong>（非終身壽險）。保障期設定至最年幼子女成年，或至房貸還清為止。</div>
+            </div>
+            <div class="ins-card-row">
+              <div class="ins-card-row-label">建議保額</div>
+              <div class="ins-card-row-val">年收入 × 10–15 倍，加上未償還債務總額。例如年收入 60 萬元，保額應達 600–900 萬元以上。</div>
+            </div>
+            <div class="ins-card-row">
+              <div class="ins-card-row-label">注意事項</div>
+              <div class="ins-card-row-val">定期壽險隨撫養責任降低可逐步調降保額，退休後子女獨立、貸款還清，可考慮不再續保。</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="ins-card">
+          <div class="ins-card-num">Priority 04 — 意外險</div>
+          <div class="ins-card-name">意外傷害保險</div>
+          <div class="ins-card-sub">Accident Insurance · 意外保障</div>
+          <div class="ins-card-body">意外險的保費在所有保險中最為便宜，但保障範圍涵蓋意外身故、意外失能及意外傷害醫療。對年輕族群而言，意外往往是比疾病更高的死亡與失能風險來源。以低廉的保費購得高額保障，是所有人都應優先配置的基礎保障。</div>
+          <div class="ins-card-rows">
+            <div class="ins-card-row">
+              <div class="ins-card-row-label">建議保額</div>
+              <div class="ins-card-row-val">身故 / 失能保額 <strong>500 萬元以上</strong>。意外傷害醫療保額至少 5–10 萬元。</div>
+            </div>
+            <div class="ins-card-row">
+              <div class="ins-card-row-label">參考保費</div>
+              <div class="ins-card-row-val">一般職業（第一類），500 萬保額的意外險年保費約 500–1,000 元，CP 值極高。</div>
+            </div>
+            <div class="ins-card-row">
+              <div class="ins-card-row-label">注意事項</div>
+              <div class="ins-card-row-val">確認職業類別正確申報，職業危險等級影響保費與理賠。部分高危職業（建築、礦業）費率大幅提高。</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="highlight-box">
+        <div class="hl-label">四大保險的投保優先順序邏輯</div>
+        <div class="hl-text">
+          預算有限時，按照以下邏輯決定投保順序：<br/><br/>
+          <strong>第一步：</strong>意外險（保費最低，立即建立基本保障）<br/>
+          <strong>第二步：</strong>實支實付醫療險（填補健保缺口，使用機率最高）<br/>
+          <strong>第三步：</strong>失能險（一旦失能，財務影響最深遠，應盡早投保）<br/>
+          <strong>第四步：</strong>定期壽險（有撫養責任者才需要，保費隨保額靈活調整）<br/><br/>
+          在這四種保障之外，所有其他保險商品（儲蓄險、投資型保單、癌症險等）都屬於「加法」，而非「必須」。先把地基打穩，再考慮是否要錦上添花。
+        </div>
+      </div>
+
+      <div class="takeaway">
+        <div class="takeaway-label">本單元核心結論</div>
+        <div class="takeaway-text">四大保險涵蓋了人生中四個最核心的財務風險：工作能力喪失、醫療費用衝擊、家庭收入中斷、意外身故與傷殘。把有限的保費預算集中在這四個領域，比購買十幾種保單更有效率，也更有保障實質。</div>
+      </div>
+
+      <div class="tools-row">
+        <span class="tool-tag primary">四大保險需求計算工具</span>
+        <span class="tool-tag">保障缺口診斷清單</span>
+      </div>
+    </section>
+
+    <!-- ════════════════════════════════ LESSON 3 ════════════════════════════════ -->
+    <section class="lesson" id="lesson-3">
+      <div class="lesson-header">
+        <div class="lesson-tag-row">
+          <span class="lesson-num-tag">Lesson 04—03</span>
+          <span class="lesson-duration">約 20 分鐘</span>
+        </div>
+        <h2 class="lesson-title">識破保險業務<br/>的話術陷阱</h2>
+        <p class="lesson-subtitle">保險業務員的薪酬來自佣金，而佣金與保單的保費成正比。了解這個結構性利益衝突，才能在購買保險時做出真正對自己有利的決策。</p>
+      </div>
+
+      <div class="content-block">
+        <div class="block-label">為何你需要對保險業務保持警覺</div>
+        <p class="body-text">這不是在批評保險業務員的個人品德——大多數人都是真心相信自己在幫助客戶。問題在於結構性的利益衝突：<strong>保費越高的保單，業務員的佣金越高</strong>。儲蓄險、投資型保單的佣金率，遠高於定期壽險或意外險。這個結構使得推薦「最適合客戶」的保單，和推薦「佣金最高的保單」之間，存在根本性的利益衝突。</p>
+        <p class="body-text">了解常見話術的邏輯和應對方式，不是要你拒絕所有保險，而是讓你在購買前能夠問出正確的問題，做出真正符合自己利益的決定。</p>
+      </div>
+
+      <div class="data-row">
+        <div class="data-cell">
+          <div class="data-num">40–60%</div>
+          <div class="data-label">儲蓄險第一年保費<br/>中業務員佣金比例</div>
+        </div>
+        <div class="data-cell">
+          <div class="data-num">3–5%</div>
+          <div class="data-label">定期壽險第一年保費<br/>中業務員佣金比例</div>
+        </div>
+        <div class="data-cell">
+          <div class="data-num">2倍</div>
+          <div class="data-label">台灣家庭保費支出<br/>相較亞洲平均的比例</div>
+        </div>
+      </div>
+
+      <div class="content-block">
+        <div class="block-label">八大常見話術與真相解析</div>
+      </div>
+
+      <table class="trap-table">
+        <thead>
+          <tr>
+            <th style="width:30%">話術內容</th>
+            <th style="width:40%">真相解析</th>
+            <th style="width:30%">你應該問的問題</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="td-trap">「這張保到期可以全部領回，等於免費保障。」</td>
+            <td class="td-truth">儲蓄險的「領回」是你的本金加上極低的利息，IRR（內部報酬率）通常只有 1–2%，遠低於同期的定存或投資報酬。保費差額若投資，長期累積遠大於「領回金額」。</td>
+            <td class="td-action">請問這張保單的 IRR（內部報酬率）是多少？我可以自己試算比較定期壽險加投資的方式嗎？</td>
+          </tr>
+          <tr>
+            <td class="td-trap">「你還年輕，現在不買以後買不到。」</td>
+            <td class="td-truth">部分保險確實年輕時較容易核保，但這句話常被用來製造緊迫感，推銷不適合的商品。年齡並非購買所有保險的緊迫理由，應以實際需求為前提。</td>
+            <td class="td-action">請解釋為什麼這個年齡段特別需要這種保險？如果我明年再買，具體會有什麼差別？</td>
+          </tr>
+          <tr>
+            <td class="td-trap">「一天只要幾塊錢，就能有全面保障。」</td>
+            <td class="td-truth">「一天幾塊錢」是讓大金額看起來很小的心理技巧。一年 3,000 元聽起來比每天 8 元更大，但金額相同。應用年費總額評估保障性價比，而非日均費用。</td>
+            <td class="td-action">這張保單一年總保費是多少？這個費用對應的保障額度和範圍是什麼？</td>
+          </tr>
+          <tr>
+            <td class="td-trap">「這張有分紅，報酬比定存好。」</td>
+            <td class="td-truth">分紅保單的分紅並不保證，且「預期分紅」通常是在最優情境下的估算值。實際分紅往往低於預期，且資金被鎖住多年，流動性極差。</td>
+            <td class="td-action">請問「保證分紅」和「預期分紅」的差別是什麼？這張保單的保證利率是多少？</td>
+          </tr>
+          <tr>
+            <td class="td-trap">「癌症這麼普遍，你一定要買癌症險。」</td>
+            <td class="td-truth">如果你已有良好的實支實付醫療險和重大傷病險，癌症的醫療費用通常已被涵蓋。額外的癌症險是重複保障，除非你的醫療保障確實有缺口。</td>
+            <td class="td-action">我現有的實支實付醫療險，在癌症治療上有哪些不能理賠的項目？我真的需要額外的癌症險嗎？</td>
+          </tr>
+          <tr>
+            <td class="td-trap">「這是公司最新推出的熱門商品，限時優惠。」</td>
+            <td class="td-truth">「限時」和「熱門」是製造稀缺感的銷售技巧，與保單是否適合你毫無關係。任何值得購買的保險，在你充分了解後再買，並不會損失任何東西。</td>
+            <td class="td-action">我需要一週時間仔細研究這張保單的條款再決定。請給我完整的保單條款書面資料。</td>
+          </tr>
+          <tr>
+            <td class="td-trap">「幫你規劃完整的財務保障，一次到位。」</td>
+            <td class="td-truth">「完整」往往意味著購買多張保單，大量重複保障，支付高額保費。一個真正對你有利的保障規劃，通常比「完整」套裝便宜許多，但覆蓋了真正重要的風險。</td>
+            <td class="td-action">這幾張保單中，哪些保障範圍有重疊？如果只保留最核心的保障，最低需要多少預算？</td>
+          </tr>
+          <tr>
+            <td class="td-trap">「這是投資型保單，兼顧保障與投資。」</td>
+            <td class="td-truth">投資型保單的費用結構不透明，前置費用、管理費、保障費用層層扣除，實際投資報酬率遠低於直接投資同類基金。保障和投資分開處理，幾乎永遠優於投資型保單。</td>
+            <td class="td-action">這張保單每年的總費用率（TER）是多少？如果我把同樣的錢分成定期壽險加 ETF 投資，十年後哪個結果更好？</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="content-block">
+        <div class="block-label">購買保險前的五項核查</div>
+        <div class="steps">
+          <div class="step-item">
+            <div class="step-num">01</div>
+            <div class="step-content">
+              <div class="step-title">釐清這張保單保的是什麼風險</div>
+              <div class="step-desc">任何一張保單都應該對應你識別出的具體風險。在購買之前，明確說出「這張保單是為了保護我免於（具體風險）的財務衝擊」。若說不出來，就不需要買。</div>
+            </div>
+          </div>
+          <div class="step-item">
+            <div class="step-num">02</div>
+            <div class="step-content">
+              <div class="step-title">計算 IRR，與其他選項比較</div>
+              <div class="step-desc">對任何有儲蓄或投資功能的保單，要求業務員提供現金流試算，並自行計算 IRR（內部報酬率）。若 IRR 低於 3%，幾乎可以確定「定期壽險 + 自行投資」是更好的選擇。</div>
+            </div>
+          </div>
+          <div class="step-item">
+            <div class="step-num">03</div>
+            <div class="step-content">
+              <div class="step-title">閱讀保單條款的理賠除外事項</div>
+              <div class="step-desc">保單的關鍵不在於保障範圍，而在於除外不賠的條款。仔細閱讀「除外責任」章節，確認你最需要的情境真的會被理賠，而非恰好落在除外條款的灰色地帶。</div>
+            </div>
+          </div>
+          <div class="step-item">
+            <div class="step-num">04</div>
+            <div class="step-content">
+              <div class="step-title">確認你是否已有重複保障</div>
+              <div class="step-desc">在購買任何新保單前，列出現有保單的保障範圍。重複保障不會讓你獲得雙倍理賠，只會讓你支付雙倍保費。合理整合現有保障，往往比新增保單更有效率。</div>
+            </div>
+          </div>
+          <div class="step-item">
+            <div class="step-num">05</div>
+            <div class="step-content">
+              <div class="step-title">給自己 72 小時冷靜期</div>
+              <div class="step-desc">任何有時間壓力的保險銷售，都應引起你的警覺。保險是長期合約，值得謹慎評估。在任何簽約前，要求給自己至少 72 小時的思考時間，並且諮詢一個不從你的保費中獲益的第三方意見。</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="takeaway">
+        <div class="takeaway-label">本單元核心結論</div>
+        <div class="takeaway-text">識別話術不是為了對抗業務員，而是為了保護自己做出真正符合利益的決定。當你能夠問出正確的問題、計算真實的報酬率、比較不同選項，你就已經具備了保險消費者應有的判斷力。</div>
+      </div>
+
+      <div class="tools-row">
+        <span class="tool-tag primary">保單 IRR 計算器</span>
+        <span class="tool-tag">購買前核查問題清單</span>
+        <span class="tool-tag">現有保單健診表</span>
+      </div>
+    </section>
+
+    <!-- ════════════════════════════════ LESSON 4 ════════════════════════════════ -->
+    <section class="lesson" id="lesson-4">
+      <div class="lesson-header">
+        <div class="lesson-tag-row">
+          <span class="lesson-num-tag">Lesson 04—04</span>
+          <span class="lesson-duration">約 20 分鐘</span>
+        </div>
+        <h2 class="lesson-title">人生各階段<br/>的保障調整策略</h2>
+        <p class="lesson-subtitle">你的保障需求不是靜態的，它隨著人生階段、財務責任和資產規模而改變。定期檢視並調整，才能確保保費花在刀口上。</p>
+      </div>
+
+      <div class="content-block">
+        <div class="block-label">為何保障需求隨人生階段變化</div>
+        <p class="body-text">保險的核心邏輯是保護你<strong>「無法自行承擔」的財務風險</strong>。隨著你的資產增加、負債減少、撫養責任改變，「無法承擔」的門檻也在移動。一個淨資產 2,000 萬的退休者，和一個淨資產 0 元的社會新鮮人，面對同樣的風險，需要的保障截然不同。</p>
+        <p class="body-text">每隔三至五年，或在重大人生事件（結婚、生子、購屋、換工作、退休）發生後，重新檢視你的保障配置。<strong>過度保障是資源浪費，保障不足是財務危機的隱患</strong>——兩者都需要避免。</p>
+      </div>
+
+      <div class="lifecycle-table">
+        <div class="lifecycle-row header">
+          <div class="lifecycle-cell">人生階段</div>
+          <div class="lifecycle-cell">核心財務風險</div>
+          <div class="lifecycle-cell">優先保障配置</div>
+          <div class="lifecycle-cell">可考慮降低或取消</div>
+        </div>
+        <div class="lifecycle-row">
+          <div class="lifecycle-cell stage">單身<br/>社會新鮮人<br/><small style="font-weight:400;font-size:12px;">22–28 歲</small></div>
+          <div class="lifecycle-cell">
+            <div class="priority">意外傷害、長期失能</div>
+            <div class="secondary">無撫養責任，但工作能力是唯一收入來源。一旦失能，財務立即崩潰。</div>
+          </div>
+          <div class="lifecycle-cell">
+            <div class="priority">意外險（500 萬）</div>
+            <div class="secondary">實支實付醫療險、失能險（趁年輕早投保，保費最低）</div>
+          </div>
+          <div class="lifecycle-cell">
+            <div class="secondary">壽險（無撫養責任，非必要）、各類儲蓄型商品</div>
+          </div>
+        </div>
+        <div class="lifecycle-row">
+          <div class="lifecycle-cell stage">成家<br/>有撫養責任<br/><small style="font-weight:400;font-size:12px;">28–40 歲</small></div>
+          <div class="lifecycle-cell">
+            <div class="priority">收入中斷、房貸無力償還</div>
+            <div class="secondary">配偶與子女依賴你的收入，一旦身故或失能，家庭財務即時面臨危機。</div>
+          </div>
+          <div class="lifecycle-cell">
+            <div class="priority">定期壽險（保額需大幅提升）</div>
+            <div class="secondary">失能險、實支實付醫療險、意外險。保額應隨房貸金額與撫養人數調整。</div>
+          </div>
+          <div class="lifecycle-cell">
+            <div class="secondary">終身壽險、儲蓄險（改為定期壽險更有效率）</div>
+          </div>
+        </div>
+        <div class="lifecycle-row">
+          <div class="lifecycle-cell stage">中年<br/>子女漸大<br/><small style="font-weight:400;font-size:12px;">40–55 歲</small></div>
+          <div class="lifecycle-cell">
+            <div class="priority">重大疾病、退休準備</div>
+            <div class="secondary">罹患重大疾病機率上升；若失能或身故，尚有未成年子女需要照顧。醫療費用自費比例上升。</div>
+          </div>
+          <div class="lifecycle-cell">
+            <div class="priority">實支實付醫療險（確認額度足夠）</div>
+            <div class="secondary">重大傷病險、失能險（繼續維持）、定期壽險（可隨子女成長逐步降低保額）</div>
+          </div>
+          <div class="lifecycle-cell">
+            <div class="secondary">當子女獨立後，可逐步調降壽險保額至僅覆蓋未還清負債</div>
+          </div>
+        </div>
+        <div class="lifecycle-row">
+          <div class="lifecycle-cell stage">退休<br/>資產充足<br/><small style="font-weight:400;font-size:12px;">55 歲以上</small></div>
+          <div class="lifecycle-cell">
+            <div class="priority">長期照護、醫療費用</div>
+            <div class="secondary">若資產充足，許多風險已可自行承擔。核心風險轉移為長壽帶來的醫療與照護費用。</div>
+          </div>
+          <div class="lifecycle-cell">
+            <div class="priority">實支實付醫療險（視健康狀況維持）</div>
+            <div class="secondary">長期照護險（若市場有合適商品）、意外險（保費仍低）</div>
+          </div>
+          <div class="lifecycle-cell">
+            <div class="secondary">壽險（若資產充足，遺族財務有保障，可考慮不續保）、失能險（部分可由資產替代）</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="content-block">
+        <div class="block-label">五年一次保障健診的執行步驟</div>
+        <div class="steps">
+          <div class="step-item">
+            <div class="step-num">01</div>
+            <div class="step-content">
+              <div class="step-title">列出所有現有保單及其保障範圍</div>
+              <div class="step-desc">整理所有在效保單，記下每張保單的險種、保額、每年保費、繳費年期、保障期間。建立一份保單彙整表，讓你一眼看清楚你目前擁有的保障全貌，以及每年的總保費支出。</div>
+            </div>
+          </div>
+          <div class="step-item">
+            <div class="step-num">02</div>
+            <div class="step-content">
+              <div class="step-title">重新評估你現在的財務責任</div>
+              <div class="step-desc">誰依賴你的收入？你有多少未償還債務？你的淨資產現在是多少？這三個問題的答案，決定了你現在實際需要多少保障。若淨資產已大幅增加，部分保障需求已可由資產自行覆蓋。</div>
+            </div>
+          </div>
+          <div class="step-item">
+            <div class="step-num">03</div>
+            <div class="step-content">
+              <div class="step-title">識別保障缺口與重複保障</div>
+              <div class="step-desc">比較現有保障與當前需求，找出兩類問題：保障不足的領域（缺口），以及多張保單重複保障同一風險的浪費。缺口需要填補，重複保障可以整合，節省保費轉入投資。</div>
+            </div>
+          </div>
+          <div class="step-item">
+            <div class="step-num">04</div>
+            <div class="step-content">
+              <div class="step-title">調整保單或新增必要保障</div>
+              <div class="step-desc">根據健診結果執行調整。降低或停繳不再需要的保單（注意解約費用與已繳保費的回收評估）；針對缺口新增最精簡的保障。調整後重新計算年度保費總支出，確認在預算範圍內。</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="highlight-box">
+        <div class="hl-label">保險與自留風險的轉換點</div>
+        <div class="hl-text">
+          當你的淨資產達到某個水準，部分保險就不再必要——因為你已有足夠的財富自行承擔這些風險。一般參考標準：<br/><br/>
+          <strong>淨資產達 500 萬：</strong>可考慮不再投保高額意外險，以緊急備用金替代小額意外損失。<br/>
+          <strong>淨資產達 1,000 萬且子女已獨立：</strong>壽險保額可大幅降低，僅保留未償還房貸金額的覆蓋。<br/>
+          <strong>淨資產達 3,000 萬以上：</strong>多數風險可自留，保留醫療險和長照保障即可。<br/><br/>
+          財富積累的終極目標之一，就是讓自己的資產成為最好的保險。
+        </div>
+      </div>
+
+      <div class="takeaway">
+        <div class="takeaway-label">本單元核心結論</div>
+        <div class="takeaway-text">保障規劃不是一次設定永遠不變的決策，而是隨著人生階段主動調整的動態過程。每五年一次的保障健診，讓你的保費永遠花在真正需要的地方——既不過度保障浪費資金，也不保障不足暴露財務風險。</div>
+      </div>
+
+      <div class="tools-row">
+        <span class="tool-tag primary">各年齡保障配置建議表</span>
+        <span class="tool-tag">五年保障健診檢查清單</span>
+      </div>
+    </section>
+
+  </div>
+</div>
+
+<!-- CHAPTER FOOTER -->
+<div class="chapter-footer">
+  <div>
+    <div class="cf-title">模組四 完成</div>
+    <h3 class="cf-heading">你已建立理性的保險決策框架</h3>
+    <p class="cf-text">你現在理解保險的風險轉移本質、掌握四大基礎保險的選購邏輯、能夠識別常見話術並問出正確問題，並學會隨人生階段動態調整保障配置。保險從此是工具，而非負擔。</p>
+    <div class="cf-nav-links">
+      <a class="cf-link prev" href="chapter3.html">返回模組三</a>
+      <a class="cf-link" href="chapter5.html">前往模組五</a>
+    </div>
+  </div>
+  <div>
+    <div class="cf-title">下一模組</div>
+    <h3 class="cf-heading">模組五：投資心理學與行為財務</h3>
+    <p class="cf-text">財務基礎與風險保障就緒後，進入投資的核心挑戰——你自己的大腦。你將學習損失趨避、七大認知偏誤、複利的力量，以及如何用系統設計取代意志力，建立真正可持續的投資紀律。</p>
+  </div>
+</div>
+
+<!-- SITE FOOTER -->
+<footer class="site-footer">
+  <div class="sf-logo">FINANCE<span>.</span>COURSE</div>
+  <div class="sf-copy">個人理財與資產配置基礎 · 模組四 / 共十模組</div>
+</footer>
+
+<script>
+  window.addEventListener('scroll', () => {
+    const el = document.documentElement;
+    const progress = el.scrollTop / (el.scrollHeight - el.clientHeight) * 100;
+    document.getElementById('progress-bar').style.width = progress + '%';
+  });
+
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+  }, { threshold: 0.07 });
+
+  document.querySelectorAll('.lesson').forEach(el => observer.observe(el));
+
+  const sideLinks = document.querySelectorAll('.lesson-nav a');
+  const topLinks  = document.querySelectorAll('.nav-links a[href^="#"]');
+
+  const sideObserver = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        const id = e.target.id;
+        sideLinks.forEach(a => a.classList.toggle('active', a.getAttribute('href') === '#' + id));
+        topLinks.forEach(a  => a.classList.toggle('active', a.getAttribute('href') === '#' + id));
+      }
+    });
+  }, { threshold: 0.45 });
+
+  document.querySelectorAll('.lesson').forEach(el => sideObserver.observe(el));
+</script>
+</body>
+</html>
