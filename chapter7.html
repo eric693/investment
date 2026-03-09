@@ -1,0 +1,1531 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>模組七：資產配置策略</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@300;400;500;600;700;900&family=IBM+Plex+Mono:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --cream:        #F5F0E8;
+      --cream-dark:   #EDE6D6;
+      --cream-mid:    #E4DBC8;
+      --cream-border: #D0C4AC;
+      --ink:          #1A1510;
+      --ink-light:    #3D3228;
+      --ink-muted:    #7A6E62;
+      --red:          #C0392B;
+      --red-wash:     #F0E0DD;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; font-size: 16px; }
+
+    body {
+      background: var(--cream);
+      color: var(--ink);
+      font-family: 'Noto Serif TC', Georgia, serif;
+      line-height: 1.8;
+      overflow-x: hidden;
+    }
+
+    body::after {
+      content: '';
+      position: fixed; inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+      pointer-events: none; z-index: 9000;
+    }
+
+    #progress-bar {
+      position: fixed; top: 0; left: 0;
+      height: 2px; background: var(--red);
+      z-index: 9999; transition: width 0.08s linear;
+    }
+
+    /* ── TOP NAV ── */
+    .top-nav {
+      position: sticky; top: 0; z-index: 500;
+      background: var(--cream-dark);
+      border-bottom: 1px solid var(--cream-border);
+      padding: 0 60px;
+      display: flex; align-items: center; justify-content: space-between;
+      height: 52px;
+    }
+    .nav-breadcrumb { font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.14em; color: var(--ink-muted); text-transform: uppercase; }
+    .nav-breadcrumb span { color: var(--red); }
+    .nav-links { display: flex; }
+    .nav-links a {
+      font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.12em;
+      text-transform: uppercase; color: var(--ink-muted); text-decoration: none;
+      padding: 0 20px; height: 52px; display: flex; align-items: center;
+      border-left: 1px solid var(--cream-border); transition: color 0.2s, background 0.2s;
+    }
+    .nav-links a:hover { color: var(--ink); background: var(--cream-mid); }
+    .nav-links a.active { color: var(--red); }
+
+    /* ── HERO ── */
+    .hero { padding: 100px 60px 80px; border-bottom: 2px solid var(--ink); position: relative; overflow: hidden; }
+    .hero-rule { position: absolute; top: 44px; left: 60px; right: 60px; height: 1px; background: var(--ink); }
+    .hero-meta { font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-muted); margin-bottom: 32px; display: flex; align-items: center; gap: 20px; }
+    .hero-meta .dot { width: 4px; height: 4px; background: var(--red); display: inline-block; }
+    .hero-meta .mod-label { color: var(--red); font-weight: 500; }
+    .hero-title { font-size: clamp(40px, 7vw, 88px); font-weight: 900; line-height: 1.0; letter-spacing: -0.025em; max-width: 900px; }
+    .hero-title .line2 { display: block; color: var(--red); }
+    .hero-deck { margin-top: 28px; max-width: 600px; font-size: 17px; font-weight: 300; color: var(--ink-light); line-height: 1.9; }
+    .hero-meta-bottom { margin-top: 48px; display: flex; gap: 40px; }
+    .meta-item { display: flex; flex-direction: column; gap: 4px; }
+    .meta-label { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--ink-muted); }
+    .meta-value { font-family: 'IBM Plex Mono', monospace; font-size: 18px; font-weight: 600; color: var(--ink); }
+    .hero-number { position: absolute; right: 60px; bottom: -20px; font-family: 'IBM Plex Mono', monospace; font-size: 220px; font-weight: 600; color: var(--cream-border); line-height: 1; user-select: none; pointer-events: none; letter-spacing: -0.05em; }
+
+    /* ── LAYOUT ── */
+    .page-body { display: grid; grid-template-columns: 220px 1fr; }
+
+    /* ── SIDEBAR ── */
+    .lesson-nav { border-right: 1px solid var(--cream-border); padding: 48px 28px; position: sticky; top: 52px; height: calc(100vh - 52px); overflow-y: auto; background: var(--cream-dark); }
+    .lesson-nav-title { font-family: 'IBM Plex Mono', monospace; font-size: 9px; letter-spacing: 0.25em; text-transform: uppercase; color: var(--ink-muted); margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px solid var(--cream-border); }
+    .lesson-nav a { display: block; padding: 10px 0; font-size: 13px; font-weight: 500; color: var(--ink-muted); text-decoration: none; transition: color 0.18s; line-height: 1.45; border-bottom: 1px solid var(--cream-border); }
+    .lesson-nav a:last-child { border-bottom: none; }
+    .lesson-nav a:hover { color: var(--ink); }
+    .lesson-nav a.active { color: var(--red); }
+    .lesson-nav .ln-num { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.1em; color: var(--cream-border); display: block; margin-bottom: 2px; transition: color 0.18s; }
+    .lesson-nav a.active .ln-num { color: var(--red); }
+    .lesson-nav a:hover .ln-num { color: var(--ink-muted); }
+
+    /* ── LESSON ── */
+    .lessons-content { padding: 0; }
+    .lesson { padding: 80px 80px 72px; border-bottom: 1px solid var(--cream-border); opacity: 0; transform: translateY(18px); transition: opacity 0.55s ease, transform 0.55s ease; }
+    .lesson.visible { opacity: 1; transform: translateY(0); }
+    .lesson:nth-child(even) { background: var(--cream-dark); }
+
+    .lesson-header { margin-bottom: 52px; padding-bottom: 36px; border-bottom: 1px solid var(--cream-border); }
+    .lesson-tag-row { display: flex; align-items: center; gap: 16px; margin-bottom: 16px; }
+    .lesson-num-tag { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--red); font-weight: 500; }
+    .lesson-duration { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.15em; color: var(--ink-muted); }
+    .lesson-title { font-size: clamp(22px, 3vw, 34px); font-weight: 700; line-height: 1.25; letter-spacing: -0.01em; margin-bottom: 12px; }
+    .lesson-subtitle { font-size: 15px; font-weight: 300; color: var(--ink-muted); line-height: 1.7; max-width: 560px; }
+
+    /* ── SHARED ── */
+    .content-block { margin-bottom: 48px; }
+    .block-label { font-family: 'IBM Plex Mono', monospace; font-size: 9px; letter-spacing: 0.28em; text-transform: uppercase; color: var(--ink-muted); margin-bottom: 16px; padding-bottom: 8px; border-bottom: 1px solid var(--cream-border); }
+    .body-text { font-size: 15.5px; line-height: 2.0; color: var(--ink-light); }
+    .body-text + .body-text { margin-top: 20px; }
+    .body-text strong { color: var(--ink); font-weight: 600; }
+
+    .pull-quote { margin: 40px 0; padding: 28px 0 28px 36px; border-left: 3px solid var(--red); }
+    .pull-quote-text { font-size: 19px; font-weight: 500; line-height: 1.7; color: var(--ink); font-style: italic; }
+    .pull-quote-source { margin-top: 12px; font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.1em; color: var(--red); }
+
+    .data-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--cream-border); border: 1px solid var(--cream-border); margin: 36px 0; }
+    .data-cell { background: var(--cream); padding: 28px; transition: background 0.2s; }
+    .lesson:nth-child(even) .data-cell { background: var(--cream-dark); }
+    .data-cell:hover { background: var(--red-wash); }
+    .data-num { font-family: 'IBM Plex Mono', monospace; font-size: 36px; font-weight: 600; color: var(--red); line-height: 1; margin-bottom: 8px; }
+    .data-label { font-size: 13px; color: var(--ink-muted); line-height: 1.5; }
+
+    .concept-list { margin: 28px 0; border: 1px solid var(--cream-border); }
+    .concept-item { display: grid; grid-template-columns: 200px 1fr; border-bottom: 1px solid var(--cream-border); }
+    .concept-item:last-child { border-bottom: none; }
+    .concept-term { padding: 20px 24px; font-weight: 600; font-size: 14px; line-height: 1.5; border-right: 1px solid var(--cream-border); background: var(--cream-mid); }
+    .concept-def { padding: 20px 28px; font-size: 14px; color: var(--ink-muted); line-height: 1.7; }
+
+    .steps { margin: 28px 0; }
+    .step-item { display: grid; grid-template-columns: 52px 1fr; border-bottom: 1px solid var(--cream-border); }
+    .step-item:first-child { border-top: 1px solid var(--cream-border); }
+    .step-num { font-family: 'IBM Plex Mono', monospace; font-size: 11px; font-weight: 600; color: var(--cream); background: var(--ink); display: flex; align-items: center; justify-content: center; padding: 20px 0; }
+    .step-content { padding: 20px 28px; }
+    .step-title { font-size: 15px; font-weight: 600; margin-bottom: 6px; }
+    .step-desc { font-size: 13.5px; color: var(--ink-muted); line-height: 1.7; }
+
+    .highlight-box { background: var(--ink); color: var(--cream); padding: 36px 40px; margin: 36px 0; }
+    .highlight-box .hl-label { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--red); margin-bottom: 14px; }
+    .highlight-box .hl-text { font-size: 15px; line-height: 1.9; color: rgba(245,240,232,0.82); }
+    .highlight-box .hl-text strong { color: var(--cream); }
+
+    .formula-block { font-family: 'IBM Plex Mono', monospace; background: var(--cream-mid); border: 1px solid var(--cream-border); padding: 28px 32px; margin: 28px 0; font-size: 14px; line-height: 2.2; color: var(--ink); }
+    .formula-block .f-comment { color: var(--ink-muted); font-size: 12px; }
+    .formula-block .f-highlight { color: var(--red); font-weight: 600; }
+    .formula-block .f-good { color: var(--ink); font-weight: 600; }
+
+    .takeaway { margin-top: 48px; padding-top: 32px; border-top: 2px solid var(--ink); }
+    .takeaway-label { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.25em; text-transform: uppercase; color: var(--red); margin-bottom: 14px; }
+    .takeaway-text { font-size: 17px; font-weight: 500; font-style: italic; color: var(--ink); line-height: 1.75; }
+
+    .tools-row { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 40px; padding-top: 28px; border-top: 1px solid var(--cream-border); }
+    .tool-tag { font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.06em; padding: 6px 16px; border: 1px solid var(--cream-border); color: var(--ink-muted); }
+    .tool-tag.primary { border-color: var(--red); color: var(--red); background: var(--red-wash); }
+
+    /* ── EFFICIENT FRONTIER DIAGRAM ── */
+    .frontier-diagram {
+      margin: 36px 0;
+      border: 1px solid var(--cream-border);
+    }
+    .frontier-header {
+      background: var(--ink);
+      padding: 14px 28px;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--red);
+    }
+    .frontier-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 1px;
+      background: var(--cream-border);
+    }
+    .frontier-cell {
+      background: var(--cream);
+      padding: 24px 24px;
+    }
+    .lesson:nth-child(even) .frontier-cell { background: var(--cream-dark); }
+    .frontier-cell-label {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 9px;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--ink-muted);
+      margin-bottom: 8px;
+    }
+    .frontier-cell-title {
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 6px;
+      color: var(--ink);
+    }
+    .frontier-cell-ret {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 28px;
+      font-weight: 600;
+      color: var(--red);
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+    .frontier-cell-vol {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 13px;
+      color: var(--ink-muted);
+      margin-bottom: 12px;
+    }
+    .frontier-bar-wrap {
+      height: 6px;
+      background: var(--cream-border);
+      margin-bottom: 12px;
+      position: relative;
+    }
+    .frontier-bar {
+      height: 100%;
+      background: var(--red);
+      position: absolute;
+      top: 0; left: 0;
+    }
+    .frontier-bar.muted { background: var(--ink-muted); }
+    .frontier-cell-desc {
+      font-size: 13px;
+      color: var(--ink-muted);
+      line-height: 1.65;
+    }
+
+    /* ── CORRELATION MATRIX ── */
+    .corr-matrix {
+      margin: 28px 0;
+      border: 1px solid var(--cream-border);
+      overflow-x: auto;
+    }
+    .corr-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .corr-table th {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      padding: 12px 14px;
+      text-align: center;
+      border-right: 1px solid var(--cream-border);
+      border-bottom: 1px solid var(--cream-border);
+      background: var(--ink);
+      color: rgba(245,240,232,0.7);
+      white-space: nowrap;
+    }
+    .corr-table th:first-child { text-align: left; }
+    .corr-table td {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 13px;
+      padding: 12px 14px;
+      text-align: center;
+      border-right: 1px solid var(--cream-border);
+      border-bottom: 1px solid var(--cream-border);
+      color: var(--ink-light);
+    }
+    .corr-table td:first-child { font-family: 'Noto Serif TC', serif; font-size: 13px; font-weight: 600; text-align: left; background: var(--cream-mid); }
+    .corr-table tr:last-child td { border-bottom: none; }
+    .corr-table .corr-high { background: var(--red-wash); color: var(--red); font-weight: 600; }
+    .corr-table .corr-mid { color: var(--ink-muted); }
+    .corr-table .corr-low { background: var(--cream-mid); color: var(--ink-muted); font-weight: 600; }
+    .corr-table .corr-neg { background: var(--cream-dark); color: var(--ink); font-weight: 600; }
+    .corr-table .corr-self { background: var(--ink); color: var(--cream); font-weight: 600; }
+
+    /* ── LIFECYCLE ALLOCATION ── */
+    .lifecycle-alloc {
+      margin: 36px 0;
+      border: 1px solid var(--cream-border);
+    }
+    .lca-header {
+      background: var(--ink);
+      display: grid;
+      grid-template-columns: 130px repeat(5, 1fr);
+      border-bottom: 1px solid var(--cream-border);
+    }
+    .lca-header div {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: rgba(245,240,232,0.65);
+      padding: 13px 16px;
+      border-right: 1px solid rgba(255,255,255,0.08);
+    }
+    .lca-header div:last-child { border-right: none; }
+    .lca-row {
+      display: grid;
+      grid-template-columns: 130px repeat(5, 1fr);
+      border-bottom: 1px solid var(--cream-border);
+    }
+    .lca-row:last-child { border-bottom: none; }
+    .lca-cell {
+      padding: 16px 16px;
+      font-size: 13px;
+      color: var(--ink-light);
+      border-right: 1px solid var(--cream-border);
+      line-height: 1.55;
+      vertical-align: top;
+    }
+    .lca-cell:last-child { border-right: none; }
+    .lca-cell.row-head {
+      font-weight: 700;
+      color: var(--ink);
+      background: var(--cream-mid);
+      font-size: 13.5px;
+    }
+    .lca-cell .pct {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 18px;
+      font-weight: 600;
+      display: block;
+      margin-bottom: 2px;
+    }
+    .lca-cell .pct.stock { color: var(--red); }
+    .lca-cell .pct.bond { color: var(--ink-muted); }
+    .lca-cell .sub { font-size: 11.5px; color: var(--ink-muted); }
+
+    /* ── INFLATION IMPACT ── */
+    .inflation-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1px;
+      background: var(--cream-border);
+      border: 1px solid var(--cream-border);
+      margin: 28px 0;
+    }
+    .inf-col { background: var(--cream); }
+    .lesson:nth-child(even) .inf-col { background: var(--cream-dark); }
+    .inf-col-head {
+      padding: 18px 24px;
+      border-bottom: 1px solid var(--cream-border);
+      background: var(--cream-mid);
+    }
+    .inf-col-title { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+    .inf-col-sub { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-muted); }
+    .inf-col-body { padding: 20px 24px; }
+    .inf-rows { display: flex; flex-direction: column; }
+    .inf-row {
+      display: grid;
+      grid-template-columns: 100px 1fr;
+      border-bottom: 1px solid var(--cream-border);
+    }
+    .inf-row:last-child { border-bottom: none; }
+    .inf-row-label {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--ink-muted);
+      padding: 12px 10px 12px 0;
+      border-right: 1px solid var(--cream-border);
+      line-height: 1.5;
+    }
+    .inf-row-val {
+      padding: 12px 0 12px 14px;
+      font-size: 13px;
+      color: var(--ink-light);
+      line-height: 1.55;
+    }
+    .inf-row-val strong { color: var(--ink); font-weight: 600; }
+    .inf-row-val .accent { font-family: 'IBM Plex Mono', monospace; color: var(--red); font-weight: 600; font-size: 16px; }
+
+    /* ── HOME BIAS ANALYSIS ── */
+    .home-bias-table {
+      margin: 28px 0;
+      border: 1px solid var(--cream-border);
+      width: 100%;
+    }
+    .home-bias-table thead tr { background: var(--ink); }
+    .home-bias-table th {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      padding: 13px 18px;
+      text-align: left;
+      color: rgba(245,240,232,0.7);
+      font-weight: 500;
+      border-right: 1px solid rgba(255,255,255,0.08);
+    }
+    .home-bias-table th:last-child { border-right: none; }
+    .home-bias-table td {
+      font-size: 13.5px;
+      padding: 15px 18px;
+      border-right: 1px solid var(--cream-border);
+      border-bottom: 1px solid var(--cream-border);
+      color: var(--ink-light);
+      vertical-align: top;
+      line-height: 1.6;
+    }
+    .home-bias-table td:last-child { border-right: none; }
+    .home-bias-table tr:last-child td { border-bottom: none; }
+    .home-bias-table tr:nth-child(even) td { background: var(--cream-dark); }
+    .home-bias-table .td-name { font-weight: 700; color: var(--ink); }
+    .home-bias-table .td-mono { font-family: 'IBM Plex Mono', monospace; }
+    .home-bias-table .td-pro { color: var(--ink); font-weight: 500; }
+    .home-bias-table .td-con { color: var(--red); font-size: 12.5px; }
+
+    /* ── GLIDE PATH VISUAL ── */
+    .glide-path {
+      margin: 36px 0;
+      border: 1px solid var(--cream-border);
+    }
+    .glide-header {
+      background: var(--ink);
+      padding: 14px 28px;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--red);
+    }
+    .glide-rows { display: flex; flex-direction: column; }
+    .glide-row {
+      display: grid;
+      grid-template-columns: 120px 1fr 100px;
+      border-bottom: 1px solid var(--cream-border);
+      align-items: center;
+    }
+    .glide-row:last-child { border-bottom: none; }
+    .glide-age {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--ink);
+      padding: 16px 20px;
+      border-right: 1px solid var(--cream-border);
+      background: var(--cream-mid);
+    }
+    .glide-bar-area {
+      padding: 16px 20px;
+      border-right: 1px solid var(--cream-border);
+    }
+    .glide-bar-bg {
+      height: 20px;
+      background: var(--cream-border);
+      position: relative;
+      overflow: hidden;
+    }
+    .glide-bar-stock {
+      height: 100%;
+      background: var(--red);
+      position: absolute;
+      top: 0; left: 0;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      padding-right: 6px;
+    }
+    .glide-bar-bond {
+      height: 100%;
+      background: var(--ink-muted);
+      position: absolute;
+      top: 0;
+      display: flex;
+      align-items: center;
+      padding-left: 6px;
+    }
+    .glide-bar-label {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--cream);
+      line-height: 1;
+    }
+    .glide-note {
+      padding: 16px 16px;
+      font-size: 12.5px;
+      color: var(--ink-muted);
+      line-height: 1.55;
+    }
+
+    /* ── ASSET CLASS COMPARISON FULL ── */
+    .asset-compare {
+      margin: 28px 0;
+      border: 1px solid var(--cream-border);
+      width: 100%;
+    }
+    .asset-compare thead tr { background: var(--ink); }
+    .asset-compare th {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      padding: 13px 16px;
+      text-align: left;
+      color: rgba(245,240,232,0.7);
+      font-weight: 500;
+      border-right: 1px solid rgba(255,255,255,0.08);
+      white-space: nowrap;
+    }
+    .asset-compare th:last-child { border-right: none; }
+    .asset-compare td {
+      font-size: 13px;
+      padding: 14px 16px;
+      border-right: 1px solid var(--cream-border);
+      border-bottom: 1px solid var(--cream-border);
+      color: var(--ink-light);
+      vertical-align: top;
+      line-height: 1.6;
+    }
+    .asset-compare td:last-child { border-right: none; }
+    .asset-compare tr:last-child td { border-bottom: none; }
+    .asset-compare tr:nth-child(even) td { background: var(--cream-dark); }
+    .asset-compare .td-class { font-weight: 700; color: var(--ink); font-size: 14px; }
+    .asset-compare .td-sub { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--red); letter-spacing: 0.1em; display: block; margin-top: 2px; }
+    .asset-compare .td-mono { font-family: 'IBM Plex Mono', monospace; }
+    .asset-compare .td-good { color: var(--ink); font-weight: 500; }
+    .asset-compare .td-warn { color: var(--red); font-size: 12px; }
+    .asset-compare .td-star { color: var(--red); font-family: 'IBM Plex Mono', monospace; font-weight: 700; }
+
+    /* ── REBALANCE SCHEDULE ── */
+    .rebal-schedule {
+      margin: 28px 0;
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1px;
+      background: var(--cream-border);
+      border: 1px solid var(--cream-border);
+    }
+    .rebal-col { background: var(--cream); }
+    .lesson:nth-child(even) .rebal-col { background: var(--cream-dark); }
+    .rebal-col-head {
+      padding: 16px 24px;
+      border-bottom: 1px solid var(--cream-border);
+      background: var(--cream-mid);
+    }
+    .rebal-col-title { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+    .rebal-col-sub { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--red); }
+    .rebal-col-body { padding: 20px 24px; font-size: 13.5px; color: var(--ink-muted); line-height: 1.75; }
+    .rebal-pros { margin-top: 14px; display: flex; flex-direction: column; gap: 6px; }
+    .rebal-pro { font-size: 13px; color: var(--ink-light); padding-left: 12px; border-left: 2px solid var(--cream-border); line-height: 1.55; }
+    .rebal-pro.accent { border-left-color: var(--red); color: var(--ink); }
+
+    /* ── CHAPTER FOOTER ── */
+    .chapter-footer { background: var(--ink); color: var(--cream); padding: 72px 80px; display: grid; grid-template-columns: 1fr 1fr; gap: 80px; }
+    .cf-title { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--red); margin-bottom: 16px; }
+    .cf-heading { font-size: 22px; font-weight: 700; line-height: 1.3; margin-bottom: 16px; }
+    .cf-text { font-size: 14px; color: rgba(245,240,232,0.6); line-height: 1.85; }
+    .cf-nav-links { display: flex; gap: 32px; margin-top: 24px; }
+    .cf-link { font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--cream); text-decoration: none; border-bottom: 1px solid var(--red); padding-bottom: 2px; transition: color 0.2s; }
+    .cf-link:hover { color: var(--red); }
+    .cf-link.prev { border-color: rgba(245,240,232,0.3); }
+    .cf-link.prev:hover { border-color: var(--red); color: var(--red); }
+
+    /* ── SITE FOOTER ── */
+    .site-footer { padding: 24px 60px; border-top: 1px solid var(--cream-border); display: flex; justify-content: space-between; align-items: center; background: var(--cream-dark); }
+    .sf-logo { font-family: 'IBM Plex Mono', monospace; font-size: 12px; font-weight: 600; letter-spacing: 0.1em; }
+    .sf-logo span { color: var(--red); }
+    .sf-copy { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--ink-muted); }
+
+    .lesson-nav::-webkit-scrollbar { width: 3px; }
+    .lesson-nav::-webkit-scrollbar-thumb { background: var(--cream-border); }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 1024px) {
+      .page-body { grid-template-columns: 1fr; }
+      .lesson-nav { display: none; }
+      .lesson { padding: 56px 40px; }
+      .hero { padding: 72px 40px 60px; }
+      .hero-rule { left: 40px; right: 40px; }
+      .chapter-footer { padding: 56px 40px; gap: 48px; }
+      .site-footer { padding: 20px 40px; }
+      .top-nav { padding: 0 40px; }
+      .frontier-grid { grid-template-columns: 1fr; }
+      .inflation-grid { grid-template-columns: 1fr; }
+      .rebal-schedule { grid-template-columns: 1fr; }
+      .lca-header { grid-template-columns: 110px repeat(4, 1fr); }
+      .lca-row { grid-template-columns: 110px repeat(4, 1fr); }
+      .lca-cell:nth-child(6), .lca-header div:nth-child(6) { display: none; }
+    }
+    @media (max-width: 640px) {
+      .hero { padding: 56px 24px 48px; }
+      .hero-rule { left: 24px; right: 24px; }
+      .hero-number { display: none; }
+      .hero-meta { flex-wrap: wrap; }
+      .lesson { padding: 40px 24px; }
+      .data-row { grid-template-columns: 1fr; }
+      .concept-item { grid-template-columns: 1fr; }
+      .concept-term { border-right: none; border-bottom: 1px solid var(--cream-border); }
+      .lca-header { grid-template-columns: 90px 1fr 1fr; }
+      .lca-row { grid-template-columns: 90px 1fr 1fr; }
+      .lca-cell:nth-child(4), .lca-cell:nth-child(5), .lca-cell:nth-child(6) { display: none; }
+      .lca-header div:nth-child(4), .lca-header div:nth-child(5), .lca-header div:nth-child(6) { display: none; }
+      .glide-row { grid-template-columns: 80px 1fr 80px; }
+      .chapter-footer { grid-template-columns: 1fr; gap: 40px; padding: 40px 24px; }
+      .site-footer { padding: 20px 24px; flex-direction: column; gap: 8px; text-align: center; }
+      .top-nav { padding: 0 20px; }
+      .nav-links { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<div id="progress-bar"></div>
+
+<nav class="top-nav">
+  <div class="nav-breadcrumb">個人理財課程 / <span>模組七</span></div>
+  <div class="nav-links">
+    <a href="index.html">課程目錄</a>
+    <a href="chapter6.html">模組六</a>
+    <a href="#lesson-1" class="active">單元 01</a>
+    <a href="#lesson-2">單元 02</a>
+    <a href="#lesson-3">單元 03</a>
+    <a href="#lesson-4">單元 04</a>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="hero-rule"></div>
+  <div class="hero-meta">
+    <span class="mod-label">Module 07</span>
+    <span class="dot"></span>
+    <span>Allocation</span>
+    <span class="dot"></span>
+    <span>資產配置</span>
+  </div>
+  <h1 class="hero-title">
+    資產配置
+    <span class="line2">策略</span>
+  </h1>
+  <p class="hero-deck">資產配置是投資中最被研究、也最有共識的決策層面。學術研究反覆確認：投資組合長期績效的 90% 以上，由資產配置決定，而非選股或擇時。這個模組教你建立真正屬於自己的配置邏輯——從現代投資組合理論到通膨對抗、從本土偏誤到動態調整，全面掌握配置的藝術與科學。</p>
+  <div class="hero-meta-bottom">
+    <div class="meta-item">
+      <span class="meta-label">單元數</span>
+      <span class="meta-value">04</span>
+    </div>
+    <div class="meta-item">
+      <span class="meta-label">學習時間</span>
+      <span class="meta-value">90 min</span>
+    </div>
+    <div class="meta-item">
+      <span class="meta-label">難度</span>
+      <span class="meta-value">中高級</span>
+    </div>
+    <div class="meta-item">
+      <span class="meta-label">附件</span>
+      <span class="meta-value">4 份</span>
+    </div>
+  </div>
+  <div class="hero-number">07</div>
+</header>
+
+<div class="page-body">
+
+  <aside class="lesson-nav">
+    <div class="lesson-nav-title">本章單元</div>
+    <a href="#lesson-1" class="active">
+      <span class="ln-num">07—01</span>
+      現代投資組合理論：分散的數學
+    </a>
+    <a href="#lesson-2">
+      <span class="ln-num">07—02</span>
+      股債比的動態調整：生命週期策略
+    </a>
+    <a href="#lesson-3">
+      <span class="ln-num">07—03</span>
+      通膨侵蝕與購買力保護
+    </a>
+    <a href="#lesson-4">
+      <span class="ln-num">07—04</span>
+      本土偏誤與全球分散的取捨
+    </a>
+  </aside>
+
+  <div class="lessons-content">
+
+    <!-- ════════════════════════════════ LESSON 1 ════════════════════════════════ -->
+    <section class="lesson" id="lesson-1">
+      <div class="lesson-header">
+        <div class="lesson-tag-row">
+          <span class="lesson-num-tag">Lesson 07—01</span>
+          <span class="lesson-duration">約 24 分鐘</span>
+        </div>
+        <h2 class="lesson-title">現代投資組合理論<br/>分散的數學</h2>
+        <p class="lesson-subtitle">1952 年，一篇 14 頁的論文改變了整個投資界。Harry Markowitz 用數學證明了：透過將相關性低的資產組合在一起，你可以在不降低報酬的情況下降低風險——這被稱為「唯一的免費午餐」。</p>
+      </div>
+
+      <div class="content-block">
+        <div class="block-label">分散投資為何在數學上有效</div>
+        <p class="body-text">單一資產的風險，用「標準差」衡量——也就是報酬在平均值上下波動的幅度。當你把兩個資產放在同一個投資組合，組合的風險<strong>不是</strong>兩個資產風險的加權平均，而是取決於它們之間的「相關係數」。</p>
+        <p class="body-text"><strong>相關係數為 -1 時</strong>，兩個資產的波動完全相反，組合風險理論上可降至零。<strong>相關係數為 +1 時</strong>，兩者完全同向，分散沒有任何好處。現實世界中，多數資產的相關係數介於 0 至 0.7 之間——這意味著分散投資確實能在統計上降低組合風險，這是有數學保證的事實，而非直覺判斷。</p>
+      </div>
+
+      <div class="formula-block">
+        <span class="f-comment">// 兩資產組合的風險計算（簡化版）</span><br/><br/>
+        組合標準差 = √(w₁²σ₁² + w₂²σ₂² + <span class="f-highlight">2·w₁·w₂·σ₁·σ₂·ρ₁₂</span>)<br/><br/>
+        <span class="f-comment">// ρ₁₂ = 相關係數（-1 至 +1）</span><br/>
+        當 ρ = <span class="f-good">+1.0</span>　→　無分散效果，組合風險 = 加權平均風險<br/>
+        當 ρ = <span class="f-good"> 0.0</span>　→　顯著分散效果，組合風險低於加權平均<br/>
+        當 ρ = <span class="f-highlight">-1.0</span>　→　完全對沖，組合風險理論上可降至零<br/><br/>
+        <span class="f-comment">// 現實中主要資產類別的相關性介於 -0.3 至 +0.7</span><br/>
+        <span class="f-comment">// 持有相關性低的資產，能在同等期望報酬下降低整體波動</span>
+      </div>
+
+      <div class="content-block">
+        <div class="block-label">主要資產類別相關係數矩陣（2000–2023 年）</div>
+        <p class="body-text">了解不同資產之間的相關性，是建立真正有效分散組合的前提。相關性越低，放在同一組合的分散效益越高。以下數據基於 2000–2023 年的長期觀察，但相關性在市場極端壓力期間往往會上升（資產同步下跌）。</p>
+      </div>
+
+      <div class="corr-matrix">
+        <table class="corr-table">
+          <thead>
+            <tr>
+              <th>資產類別</th>
+              <th>美股</th>
+              <th>國際股</th>
+              <th>新興股</th>
+              <th>美國公債</th>
+              <th>公司債</th>
+              <th>不動產</th>
+              <th>黃金</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>美國股票</td>
+              <td class="corr-self">1.00</td>
+              <td class="corr-high">0.87</td>
+              <td class="corr-high">0.74</td>
+              <td class="corr-neg">-0.28</td>
+              <td class="corr-mid">0.42</td>
+              <td class="corr-mid">0.65</td>
+              <td class="corr-low">0.02</td>
+            </tr>
+            <tr>
+              <td>國際已開發股</td>
+              <td class="corr-high">0.87</td>
+              <td class="corr-self">1.00</td>
+              <td class="corr-high">0.79</td>
+              <td class="corr-neg">-0.21</td>
+              <td class="corr-mid">0.38</td>
+              <td class="corr-mid">0.58</td>
+              <td class="corr-low">0.08</td>
+            </tr>
+            <tr>
+              <td>新興市場股</td>
+              <td class="corr-high">0.74</td>
+              <td class="corr-high">0.79</td>
+              <td class="corr-self">1.00</td>
+              <td class="corr-neg">-0.15</td>
+              <td class="corr-mid">0.44</td>
+              <td class="corr-mid">0.55</td>
+              <td class="corr-low">0.12</td>
+            </tr>
+            <tr>
+              <td>美國政府公債</td>
+              <td class="corr-neg">-0.28</td>
+              <td class="corr-neg">-0.21</td>
+              <td class="corr-neg">-0.15</td>
+              <td class="corr-self">1.00</td>
+              <td class="corr-mid">0.58</td>
+              <td class="corr-neg">-0.08</td>
+              <td class="corr-low">0.22</td>
+            </tr>
+            <tr>
+              <td>投資等級公司債</td>
+              <td class="corr-mid">0.42</td>
+              <td class="corr-mid">0.38</td>
+              <td class="corr-mid">0.44</td>
+              <td class="corr-mid">0.58</td>
+              <td class="corr-self">1.00</td>
+              <td class="corr-mid">0.37</td>
+              <td class="corr-low">0.17</td>
+            </tr>
+            <tr>
+              <td>不動產 REIT</td>
+              <td class="corr-mid">0.65</td>
+              <td class="corr-mid">0.58</td>
+              <td class="corr-mid">0.55</td>
+              <td class="corr-neg">-0.08</td>
+              <td class="corr-mid">0.37</td>
+              <td class="corr-self">1.00</td>
+              <td class="corr-low">0.09</td>
+            </tr>
+            <tr>
+              <td>黃金</td>
+              <td class="corr-low">0.02</td>
+              <td class="corr-low">0.08</td>
+              <td class="corr-low">0.12</td>
+              <td class="corr-low">0.22</td>
+              <td class="corr-low">0.17</td>
+              <td class="corr-low">0.09</td>
+              <td class="corr-self">1.00</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="content-block">
+        <div class="block-label">效率前緣：在同等風險下最大化報酬</div>
+        <p class="body-text">Markowitz 的最大貢獻，是提出「效率前緣（Efficient Frontier）」的概念：在所有可能的資產組合中，存在一條曲線，曲線上的每一個點代表「在特定風險水準下，期望報酬最高的投資組合」。落在這條曲線之下的組合，都是次優的——你可以用相同的風險換取更高的報酬，或用相同的報酬承擔更低的風險。</p>
+      </div>
+
+      <div class="frontier-diagram">
+        <div class="frontier-header">效率前緣上的三個代表性投資組合</div>
+        <div class="frontier-grid">
+          <div class="frontier-cell">
+            <div class="frontier-cell-label">低風險端點</div>
+            <div class="frontier-cell-title">最小變異數組合</div>
+            <div class="frontier-cell-ret">6.2%</div>
+            <div class="frontier-cell-vol">年化波動率：8.4%</div>
+            <div class="frontier-bar-wrap">
+              <div class="frontier-bar" style="width:35%"></div>
+            </div>
+            <div class="frontier-cell-desc">股票 30% + 債券 70%。在所有「有效」組合中波動最低，但期望報酬也最低。適合最保守的投資人，或接近提領期的退休帳戶。</div>
+          </div>
+          <div class="frontier-cell">
+            <div class="frontier-cell-label">最優夏普比率點</div>
+            <div class="frontier-cell-title">切線投資組合</div>
+            <div class="frontier-cell-ret">8.7%</div>
+            <div class="frontier-cell-vol">年化波動率：12.1%</div>
+            <div class="frontier-bar-wrap">
+              <div class="frontier-bar" style="width:60%"></div>
+            </div>
+            <div class="frontier-cell-desc">股票 65% + 債券 35%。在效率前緣上，每單位風險所獲得的超額報酬最高（夏普比率最大）。理論上的「最優」平衡點，適合大多數長期投資人。</div>
+          </div>
+          <div class="frontier-cell">
+            <div class="frontier-cell-label">高報酬端點</div>
+            <div class="frontier-cell-title">最大期望報酬組合</div>
+            <div class="frontier-cell-ret">10.4%</div>
+            <div class="frontier-cell-vol">年化波動率：18.6%</div>
+            <div class="frontier-bar-wrap">
+              <div class="frontier-bar" style="width:100%"></div>
+            </div>
+            <div class="frontier-cell-desc">股票 100%。在效率前緣的最高點，期望報酬最大但波動也最大。適合投資時間極長（20 年以上）且可承受 50% 以上最大回撤的積極型投資人。</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="content-block">
+        <div class="block-label">現代投資組合理論的六個核心啟示</div>
+        <div class="concept-list">
+          <div class="concept-item">
+            <div class="concept-term">分散的真正意義<br/>不是「多」</div>
+            <div class="concept-def">持有 50 檔相關性高的台灣科技股，不如持有 1 檔全球 ETF。分散的關鍵是資產之間的「相關性低」，而非數量多。把全部資金分成 10 份買不同個股，若它們在同一個市場，分散效益有限。</div>
+          </div>
+          <div class="concept-item">
+            <div class="concept-term">系統性風險<br/>無法被分散</div>
+            <div class="concept-def">資產特有風險（個別公司風險）可以透過分散消除，但「市場整體下跌」的系統性風險無法靠分散消除。這就是為何即使持有全球 ETF，2008 年仍然下跌了 50%——那是系統性風險的體現，不能靠更多分散來避免。</div>
+          </div>
+          <div class="concept-item">
+            <div class="concept-term">相關性在危機時<br/>趨近於 1</div>
+            <div class="concept-def">在市場極度恐慌時，多數風險性資產（股票、公司債、新興市場、不動產）的相關性會急速上升，同步下跌。只有高品質政府公債和黃金在某些情境下維持低相關性，這正是它們在極端市場環境中仍有配置價值的原因。</div>
+          </div>
+          <div class="concept-item">
+            <div class="concept-term">報酬的 90%<br/>由配置決定</div>
+            <div class="concept-def">Brinson、Hood、Beebower 在 1986 年的研究（後被多次複製）顯示，養老基金投資組合長期績效的 91.5% 可以被資產配置解釋，選股和擇時只解釋剩餘的 8.5%。這是資產配置重要性最有力的學術依據。</div>
+          </div>
+          <div class="concept-item">
+            <div class="concept-term">理論的假設<br/>與現實的差距</div>
+            <div class="concept-def">MPT 假設投資人理性、報酬呈常態分布、相關性穩定。現實中，這些假設都不完全成立——極端事件（黑天鵝）比常態分布預測的更頻繁，市場中有大量非理性行為。但 MPT 的核心邏輯——分散降低風險——在實踐中仍然有效且被廣泛應用。</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="data-row">
+        <div class="data-cell">
+          <div class="data-num">91.5%</div>
+          <div class="data-label">投資組合長期績效<br/>可由資產配置解釋的比例</div>
+        </div>
+        <div class="data-cell">
+          <div class="data-num">-0.28</div>
+          <div class="data-label">美國股票與美國公債<br/>長期相關係數（分散核心）</div>
+        </div>
+        <div class="data-cell">
+          <div class="data-num">1952</div>
+          <div class="data-label">Markowitz 發表<br/>現代投資組合理論的年份</div>
+        </div>
+      </div>
+
+      <div class="takeaway">
+        <div class="takeaway-label">本單元核心結論</div>
+        <div class="takeaway-text">分散投資不是模糊的直覺，而是有數學基礎的策略。持有相關性低的資產組合，能在不降低期望報酬的情況下降低整體波動——這是投資中極少數真正「免費」的好處。理解這個機制，就理解了資產配置的底層邏輯。</div>
+      </div>
+
+      <div class="tools-row">
+        <span class="tool-tag primary">資產相關係數查詢工具</span>
+        <span class="tool-tag">投資組合效率評估表</span>
+        <span class="tool-tag">夏普比率計算器</span>
+      </div>
+    </section>
+
+    <!-- ════════════════════════════════ LESSON 2 ════════════════════════════════ -->
+    <section class="lesson" id="lesson-2">
+      <div class="lesson-header">
+        <div class="lesson-tag-row">
+          <span class="lesson-num-tag">Lesson 07—02</span>
+          <span class="lesson-duration">約 22 分鐘</span>
+        </div>
+        <h2 class="lesson-title">股債比的動態調整<br/>生命週期投資策略</h2>
+        <p class="lesson-subtitle">最優的資產配置不是靜止的，而是隨著你與目標的距離縮短而系統性地調整。生命週期策略把「時間」本身視為最重要的風險因子，並據此設計出隨年齡自動降低風險的滑行軌道。</p>
+      </div>
+
+      <div class="content-block">
+        <div class="block-label">時間就是風險緩衝器</div>
+        <p class="body-text">年輕投資人持有 100% 股票，是有充分理由的：他們有數十年時間等待市場從崩盤中復原。歷史上，標普 500 從未有過任何一個 20 年窗口的累積報酬為負值。<strong>時間愈長，市場波動的短期傷害愈難以持久。</strong></p>
+        <p class="body-text">但當退休日期臨近，這個緩衝消失了。一個 62 歲、計劃 65 歲退休的人，若投資組合在 63 歲遭遇 40% 崩盤，他沒有足夠時間等待復原，且可能被迫在低點賣出資產支付生活費用。這就是生命週期策略的核心邏輯：<strong>隨著時間縮短，主動降低波動暴露。</strong></p>
+      </div>
+
+      <div class="content-block">
+        <div class="block-label">股債比隨年齡的滑行軌道（Glide Path）</div>
+        <p class="body-text">以下展示三種不同積極程度的股債比調整軌道。數字為參考值，實際應根據個人風險承受度調整。</p>
+      </div>
+
+      <div class="glide-path">
+        <div class="glide-header">股債配置滑行軌道 — 三種積極程度對比</div>
+        <div class="glide-rows">
+          <div class="glide-row">
+            <div class="glide-age">25 歲<br/><small style="font-weight:400;font-size:11px;">起步期</small></div>
+            <div class="glide-bar-area">
+              <div class="glide-bar-bg">
+                <div class="glide-bar-stock" style="width:100%"><span class="glide-bar-label">股 100%</span></div>
+              </div>
+              <div style="margin-top:6px;font-size:11px;color:var(--ink-muted);font-family:monospace;">積極 100/0 · 均衡 100/0 · 保守 90/10</div>
+            </div>
+            <div class="glide-note">距退休 40 年，時間是最好的風險緩衝器，高股票比例合理。</div>
+          </div>
+          <div class="glide-row">
+            <div class="glide-age">35 歲<br/><small style="font-weight:400;font-size:11px;">成長期</small></div>
+            <div class="glide-bar-area">
+              <div class="glide-bar-bg">
+                <div class="glide-bar-stock" style="width:95%"><span class="glide-bar-label">95%</span></div>
+                <div class="glide-bar-bond" style="left:95%;width:5%;"><span class="glide-bar-label">5%</span></div>
+              </div>
+              <div style="margin-top:6px;font-size:11px;color:var(--ink-muted);font-family:monospace;">積極 95/5 · 均衡 90/10 · 保守 80/20</div>
+            </div>
+            <div class="glide-note">財務責任增加，可適量引入債券提供緩衝，不影響長期成長。</div>
+          </div>
+          <div class="glide-row">
+            <div class="glide-age">45 歲<br/><small style="font-weight:400;font-size:11px;">積累期</small></div>
+            <div class="glide-bar-area">
+              <div class="glide-bar-bg">
+                <div class="glide-bar-stock" style="width:85%"><span class="glide-bar-label">85%</span></div>
+                <div class="glide-bar-bond" style="left:85%;width:15%;"><span class="glide-bar-label">15%</span></div>
+              </div>
+              <div style="margin-top:6px;font-size:11px;color:var(--ink-muted);font-family:monospace;">積極 85/15 · 均衡 80/20 · 保守 70/30</div>
+            </div>
+            <div class="glide-note">距退休約 20 年，開始系統性降低股票比例，為未來波動做準備。</div>
+          </div>
+          <div class="glide-row">
+            <div class="glide-age">55 歲<br/><small style="font-weight:400;font-size:11px;">過渡期</small></div>
+            <div class="glide-bar-area">
+              <div class="glide-bar-bg">
+                <div class="glide-bar-stock" style="width:70%"><span class="glide-bar-label">70%</span></div>
+                <div class="glide-bar-bond" style="left:70%;width:30%;"><span class="glide-bar-label">30%</span></div>
+              </div>
+              <div style="margin-top:6px;font-size:11px;color:var(--ink-muted);font-family:monospace;">積極 70/30 · 均衡 65/35 · 保守 55/45</div>
+            </div>
+            <div class="glide-note">進入退休前10年關鍵期，明確降低股票暴露，保護累積成果。</div>
+          </div>
+          <div class="glide-row">
+            <div class="glide-age">65 歲<br/><small style="font-weight:400;font-size:11px;">退休起點</small></div>
+            <div class="glide-bar-area">
+              <div class="glide-bar-bg">
+                <div class="glide-bar-stock" style="width:55%"><span class="glide-bar-label">55%</span></div>
+                <div class="glide-bar-bond" style="left:55%;width:45%;"><span class="glide-bar-label">45%</span></div>
+              </div>
+              <div style="margin-top:6px;font-size:11px;color:var(--ink-muted);font-family:monospace;">積極 60/40 · 均衡 50/50 · 保守 40/60</div>
+            </div>
+            <div class="glide-note">退休起點，仍需保留股票對抗通膨和長壽風險（可能再活30年）。</div>
+          </div>
+          <div class="glide-row">
+            <div class="glide-age">75 歲<br/><small style="font-weight:400;font-size:11px;">提領期</small></div>
+            <div class="glide-bar-area">
+              <div class="glide-bar-bg">
+                <div class="glide-bar-stock" style="width:40%"><span class="glide-bar-label">40%</span></div>
+                <div class="glide-bar-bond" style="left:40%;width:60%;"><span class="glide-bar-label">60%</span></div>
+              </div>
+              <div style="margin-top:6px;font-size:11px;color:var(--ink-muted);font-family:monospace;">積極 45/55 · 均衡 35/65 · 保守 25/75</div>
+            </div>
+            <div class="glide-note">持續提領階段，穩定現金流比資產成長更重要，債券比例顯著提升。</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="content-block">
+        <div class="block-label">各年齡段的詳細資產配置建議</div>
+      </div>
+
+      <div class="lifecycle-alloc">
+        <div class="lca-header">
+          <div>年齡段</div>
+          <div>全球股票</div>
+          <div>國際債券</div>
+          <div>不動產 REIT</div>
+          <div>現金 / 短期</div>
+          <div>核心邏輯</div>
+        </div>
+        <div class="lca-row">
+          <div class="lca-cell row-head">25–35 歲<br/><small style="font-weight:400;font-size:11px;">最大積累期</small></div>
+          <div class="lca-cell">
+            <span class="pct stock">90–100%</span>
+            <span class="sub">VT 或 VTI + VXUS</span>
+          </div>
+          <div class="lca-cell">
+            <span class="pct bond">0–5%</span>
+            <span class="sub">可暫時省略</span>
+          </div>
+          <div class="lca-cell">
+            <span class="pct bond">0–5%</span>
+            <span class="sub">選擇性加入</span>
+          </div>
+          <div class="lca-cell">
+            <span class="pct bond">3–6 個月</span>
+            <span class="sub">緊急備用金</span>
+          </div>
+          <div class="lca-cell">
+            <span class="sub">時間最長，最大化股票曝險，容忍短期波動以換取長期複利最大化。</span>
+          </div>
+        </div>
+        <div class="lca-row">
+          <div class="lca-cell row-head">35–50 歲<br/><small style="font-weight:400;font-size:11px;">責任最重期</small></div>
+          <div class="lca-cell">
+            <span class="pct stock">75–90%</span>
+            <span class="sub">全球股票為主</span>
+          </div>
+          <div class="lca-cell">
+            <span class="pct bond">10–20%</span>
+            <span class="sub">BND 或 BNDW</span>
+          </div>
+          <div class="lca-cell">
+            <span class="pct bond">0–5%</span>
+            <span class="sub">視偏好</span>
+          </div>
+          <div class="lca-cell">
+            <span class="pct bond">3–6 個月</span>
+            <span class="sub">緊急備用金</span>
+          </div>
+          <div class="lca-cell">
+            <span class="sub">有撫養責任與房貸，適度引入債券提供心理緩衝，避免市場崩盤時因恐慌做出錯誤決策。</span>
+          </div>
+        </div>
+        <div class="lca-row">
+          <div class="lca-cell row-head">50–60 歲<br/><small style="font-weight:400;font-size:11px;">退休前期</small></div>
+          <div class="lca-cell">
+            <span class="pct stock">60–75%</span>
+            <span class="sub">全球股票</span>
+          </div>
+          <div class="lca-cell">
+            <span class="pct bond">20–35%</span>
+            <span class="sub">中短期債券</span>
+          </div>
+          <div class="lca-cell">
+            <span class="pct bond">0–5%</span>
+            <span class="sub">視偏好</span>
+          </div>
+          <div class="lca-cell">
+            <span class="pct bond">1–2 年</span>
+            <span class="sub">退休緩衝金</span>
+          </div>
+          <div class="lca-cell">
+            <span class="sub">「序列風險」最高的十年。開始建立退休緩衝金（1–2 年生活費），減少在最壞時機被迫賣股的風險。</span>
+          </div>
+        </div>
+        <div class="lca-row">
+          <div class="lca-cell row-head">60 歲以上<br/><small style="font-weight:400;font-size:11px;">退休提領期</small></div>
+          <div class="lca-cell">
+            <span class="pct stock">40–60%</span>
+            <span class="sub">全球股票（抗通膨）</span>
+          </div>
+          <div class="lca-cell">
+            <span class="pct bond">35–55%</span>
+            <span class="sub">分散期限債券</span>
+          </div>
+          <div class="lca-cell">
+            <span class="pct bond">0–5%</span>
+            <span class="sub">視偏好</span>
+          </div>
+          <div class="lca-cell">
+            <span class="pct bond">2–3 年</span>
+            <span class="sub">現金桶</span>
+          </div>
+          <div class="lca-cell">
+            <span class="sub">仍需持有股票對抗通膨（退休後可能再活 30 年）。現金桶避免在熊市提領，讓股票部位有時間復原。</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="highlight-box">
+        <div class="hl-label">序列風險：退休前後最危險的十年</div>
+        <div class="hl-text">
+          「序列風險（Sequence of Returns Risk）」是指退休前後幾年遭遇熊市，對整體退休財務的毀滅性影響。相同的平均報酬率，若熊市發生在退休初期，比熊市發生在晚年傷害大出數倍——因為你在低點提領，減少了參與後續復原的資產基數。<br/><br/>
+          <strong>數字說明：</strong>100 萬元退休金，每年提領 4 萬元（4%），若退休後前三年遭遇 -30% 崩盤，20 年後資產可能提早耗盡；若同樣的崩盤發生在退休後第 15 年，影響則微乎其微。<br/><br/>
+          應對序列風險的核心工具是<strong>「現金桶策略」</strong>：保留 2–3 年生活費在現金或短期債券，讓股票部位在熊市期間不需被提領，等待復原。
+        </div>
+      </div>
+
+      <div class="takeaway">
+        <div class="takeaway-label">本單元核心結論</div>
+        <div class="takeaway-text">資產配置不是一次設定就永久不變的決策，而是隨著你與目標的距離系統性調整的動態過程。年輕時盡量持有股票讓複利最大化，臨近退休時系統性降低波動保護成果——這條滑行軌道，是時間與風險之間最理性的平衡協議。</div>
+      </div>
+
+      <div class="tools-row">
+        <span class="tool-tag primary">生命週期股債比計算器</span>
+        <span class="tool-tag">序列風險情境模擬表</span>
+        <span class="tool-tag">退休現金桶設置指南</span>
+      </div>
+    </section>
+
+    <!-- ════════════════════════════════ LESSON 3 ════════════════════════════════ -->
+    <section class="lesson" id="lesson-3">
+      <div class="lesson-header">
+        <div class="lesson-tag-row">
+          <span class="lesson-num-tag">Lesson 07—03</span>
+          <span class="lesson-duration">約 22 分鐘</span>
+        </div>
+        <h2 class="lesson-title">通膨侵蝕<br/>與購買力保護</h2>
+        <p class="lesson-subtitle">通膨是最溫和、也最致命的財富侵蝕者。它不像股市崩盤那樣令人警覺，而是每年悄悄地侵蝕你的購買力，讓帳戶數字看起來沒有縮水，但實際能買到的東西越來越少。</p>
+      </div>
+
+      <div class="content-block">
+        <div class="block-label">通膨的複利侵蝕效應</div>
+        <p class="body-text">台灣近年通膨率約 2–3%，看似溫和。但複利的作用同樣適用於通膨對購買力的侵蝕——<strong>2% 的年通膨率，在 35 年後會讓 100 萬元的購買力縮減至 49.7 萬元</strong>，幾乎減半。若通膨率達到 3%，35 年後的購買力只剩 35.6 萬元。</p>
+        <p class="body-text">這意味著，一個退休後持有現金或低利率定存的人，帳戶數字沒有縮減，但每年實際財富在無聲地消失。對抗通膨，不是選擇，而是退休財務規劃的必要課題。</p>
+      </div>
+
+      <div class="formula-block">
+        <span class="f-comment">// 通膨侵蝕：100 萬元的實際購買力隨時間萎縮</span><br/><br/>
+        通膨 <span class="f-good">2%</span> 下：<br/>
+        　10 年後 → <span class="f-good">82.0 萬元</span>購買力（損失 18.0%）<br/>
+        　20 年後 → <span class="f-good">67.3 萬元</span>購買力（損失 32.7%）<br/>
+        　35 年後 → <span class="f-good">49.7 萬元</span>購買力（損失 50.3%）<br/><br/>
+        通膨 <span class="f-highlight">3%</span> 下：<br/>
+        　10 年後 → <span class="f-highlight">74.4 萬元</span>購買力（損失 25.6%）<br/>
+        　20 年後 → <span class="f-highlight">55.4 萬元</span>購買力（損失 44.6%）<br/>
+        　35 年後 → <span class="f-highlight">35.6 萬元</span>購買力（損失 64.4%）<br/><br/>
+        <span class="f-comment">// 結論：退休後持有現金不投資，等同於確定性的財富損失</span>
+      </div>
+
+      <div class="content-block">
+        <div class="block-label">各資產類別對通膨的歷史對抗能力</div>
+      </div>
+
+      <table class="asset-compare">
+        <thead>
+          <tr>
+            <th>資產類別</th>
+            <th>長期名義報酬</th>
+            <th>通膨對抗能力</th>
+            <th>機制說明</th>
+            <th>缺點 / 限制</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="td-class">全球股票</span><span class="td-sub">EQUITIES</span></td>
+            <td class="td-mono td-good">7–10% / 年</td>
+            <td><span class="td-star">優秀</span></td>
+            <td>企業能將成本上漲轉嫁給消費者，收入與利潤隨通膨成長。長期而言，股票是最有效的購買力保護工具。</td>
+            <td class="td-warn">短期波動大，不適合作為短期通膨對衝工具；高通膨衝擊期間可能短期同步下跌。</td>
+          </tr>
+          <tr>
+            <td><span class="td-class">不動產 / REIT</span><span class="td-sub">REAL ESTATE</span></td>
+            <td class="td-mono td-good">6–9% / 年</td>
+            <td><span class="td-star">良好</span></td>
+            <td>房地產價格與租金通常隨通膨上漲，是長期有效的實質資產。REIT 提供不動產曝險而無需直接購置房產。</td>
+            <td class="td-warn">流動性低（直接持有）；升息期間 REIT 評價壓力大；台灣 REIT 市場規模仍有限。</td>
+          </tr>
+          <tr>
+            <td><span class="td-class">抗通膨公債 TIPS</span><span class="td-sub">INFLATION-LINKED</span></td>
+            <td class="td-mono">CPI + 0.5–1.5%</td>
+            <td><span class="td-star">良好</span></td>
+            <td>本金依 CPI 指數每年調整，直接連結通膨率。通膨越高，本金增長越多。美國 TIPS、英國 Linkers 均屬此類。</td>
+            <td class="td-warn">實質殖利率低；通膨低於預期時績效遜於普通公債；台灣目前無直接對應商品。</td>
+          </tr>
+          <tr>
+            <td><span class="td-class">黃金</span><span class="td-sub">GOLD</span></td>
+            <td class="td-mono">2–4% / 年</td>
+            <td><span style="color:var(--ink-muted);font-family:monospace;font-weight:600;">尚可</span></td>
+            <td>長期是價值儲存工具，在極端通膨和地緣政治危機時表現突出。與股債相關性低，有組合分散效果。</td>
+            <td class="td-warn">不產生現金流（股息 / 利息）；長期名義報酬低；短中期走勢難以預測；持有成本存在。</td>
+          </tr>
+          <tr>
+            <td><span class="td-class">現金 / 定存</span><span class="td-sub">CASH</span></td>
+            <td class="td-mono">0.5–2.0% / 年</td>
+            <td><span class="td-warn">無法保護</span></td>
+            <td>在利率高於通膨的情境下可短期保值，但長期而言利率幾乎從未持續超過通膨，實質購買力持續縮水。</td>
+            <td class="td-warn">長期幾乎確定損失實質購買力；應限制為緊急備用金和短期現金需求，而非長期持有的資產形式。</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="content-block">
+        <div class="block-label">通膨對不同退休場景的衝擊模擬</div>
+      </div>
+
+      <div class="inflation-grid">
+        <div class="inf-col">
+          <div class="inf-col-head">
+            <div class="inf-col-title">全現金退休策略</div>
+            <div class="inf-col-sub">100% 現金定存 · 通膨 2.5%</div>
+          </div>
+          <div class="inf-col-body">
+            <div class="inf-rows">
+              <div class="inf-row">
+                <div class="inf-row-label">退休本金</div>
+                <div class="inf-row-val"><span class="accent">1,000 萬元</span></div>
+              </div>
+              <div class="inf-row">
+                <div class="inf-row-label">定存利率</div>
+                <div class="inf-row-val">1.5%（低於通膨）</div>
+              </div>
+              <div class="inf-row">
+                <div class="inf-row-label">每年提領</div>
+                <div class="inf-row-val">40 萬元（名義值固定）</div>
+              </div>
+              <div class="inf-row">
+                <div class="inf-row-label">10 年後購買力</div>
+                <div class="inf-row-val">40 萬元 → 實質 <strong>31.5 萬元</strong></div>
+              </div>
+              <div class="inf-row">
+                <div class="inf-row-label">20 年後資產</div>
+                <div class="inf-row-val"><span class="accent">約 530 萬元</span>（本金損耗 + 通膨）</div>
+              </div>
+              <div class="inf-row">
+                <div class="inf-row-label">25 年後狀態</div>
+                <div class="inf-row-val"><strong>資產可能耗盡</strong>，但生活費用因通膨持續上升</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="inf-col">
+          <div class="inf-col-head">
+            <div class="inf-col-title">股債均衡退休策略</div>
+            <div class="inf-col-sub">股 50 / 債 40 / 現金 10 · 通膨 2.5%</div>
+          </div>
+          <div class="inf-col-body">
+            <div class="inf-rows">
+              <div class="inf-row">
+                <div class="inf-row-label">退休本金</div>
+                <div class="inf-row-val"><span class="accent">1,000 萬元</span></div>
+              </div>
+              <div class="inf-row">
+                <div class="inf-row-label">組合報酬預期</div>
+                <div class="inf-row-val">約 5.5–6.0%（名義值）</div>
+              </div>
+              <div class="inf-row">
+                <div class="inf-row-label">每年提領</div>
+                <div class="inf-row-val">40 萬元（隨通膨每年調升 2.5%）</div>
+              </div>
+              <div class="inf-row">
+                <div class="inf-row-label">10 年後購買力</div>
+                <div class="inf-row-val">實質購買力 <strong>維持 40 萬元等值</strong></div>
+              </div>
+              <div class="inf-row">
+                <div class="inf-row-label">20 年後資產</div>
+                <div class="inf-row-val"><span class="accent">約 850–950 萬元</span>（含通膨調整後）</div>
+              </div>
+              <div class="inf-row">
+                <div class="inf-row-label">30 年後狀態</div>
+                <div class="inf-row-val"><strong>資產仍有結餘</strong>，購買力大致維持</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="content-block">
+        <div class="block-label">實用的通膨對抗策略組合</div>
+        <div class="steps">
+          <div class="step-item">
+            <div class="step-num">01</div>
+            <div class="step-content">
+              <div class="step-title">核心持倉維持高股票比例（最有效的長期通膨對抗）</div>
+              <div class="step-desc">全球股票是長期最有效的購買力保護工具。即使在退休後，仍應保持 40–60% 的股票比例，因為退休可能持續 30 年——放棄股票的長期成長，等同於接受通膨的長期侵蝕。不要把退休等同於「把所有錢移到定存」。</div>
+            </div>
+          </div>
+          <div class="step-item">
+            <div class="step-num">02</div>
+            <div class="step-content">
+              <div class="step-title">提領金額每年隨通膨調整（而非固定名義金額）</div>
+              <div class="step-desc">若你退休時每年提領 40 萬元，隔年應提領 40 × (1 + 通膨率) 萬元。固定名義提領金額意味著你每年實際能消費的東西越來越少。在你的退休提領計劃中，建立通膨調整機制，確保實質購買力不縮水。</div>
+            </div>
+          </div>
+          <div class="step-item">
+            <div class="step-num">03</div>
+            <div class="step-content">
+              <div class="step-title">考慮配置 5–10% 的實質資產（不動產 REIT 或 TIPS）</div>
+              <div class="step-desc">直接與通膨連結的資產——不動產、抗通膨公債——在通膨意外攀升時，提供額外的保護。這不是必要配置，而是在你認為通膨風險高於歷史平均時的選擇性加碼。台灣投資人可透過全球 REIT ETF（如 VNQ）或美國 TIPS ETF（如 SCHP）取得曝險。</div>
+            </div>
+          </div>
+          <div class="step-item">
+            <div class="step-num">04</div>
+            <div class="step-content">
+              <div class="step-title">計算「實質報酬率」而非名義報酬率</div>
+              <div class="step-desc">投資的真正目標是提高購買力，而非帳戶數字。學習計算實質報酬率（名義報酬率 − 通膨率），以此評估投資表現。若你的投資組合名義報酬 6%，但通膨 3%，實質報酬只有 3%——這才是你真正增加的財富。</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="takeaway">
+        <div class="takeaway-label">本單元核心結論</div>
+        <div class="takeaway-text">通膨是唯一確定會發生的財務風險。對抗它的最有效手段，不是複雜的通膨連結工具，而是持續持有能夠長期超越通膨的股票資產。退休不是停止投資的訊號，而是把投資組合從「成長導向」調整為「成長兼保護導向」的轉捩點。</div>
+      </div>
+
+      <div class="tools-row">
+        <span class="tool-tag primary">通膨侵蝕計算器</span>
+        <span class="tool-tag">退休提領通膨調整試算表</span>
+      </div>
+    </section>
+
+    <!-- ════════════════════════════════ LESSON 4 ════════════════════════════════ -->
+    <section class="lesson" id="lesson-4">
+      <div class="lesson-header">
+        <div class="lesson-tag-row">
+          <span class="lesson-num-tag">Lesson 07—04</span>
+          <span class="lesson-duration">約 22 分鐘</span>
+        </div>
+        <h2 class="lesson-title">本土偏誤<br/>與全球分散的取捨</h2>
+        <p class="lesson-subtitle">台灣投資人對台灣股市的過度集中，是本土偏誤最典型的體現。這個單元從數據出發，分析本土偏誤的成因、代價，以及如何在本土資產與全球分散之間找到理性的平衡。</p>
+      </div>
+
+      <div class="content-block">
+        <div class="block-label">什麼是本土偏誤，為何它如此普遍</div>
+        <p class="body-text">本土偏誤（Home Bias）是指投資人在投資組合中，持有遠超其在全球市場比例的本國資產。台灣股市約佔全球股市市值的 1.5–2%，但研究顯示台灣散戶投資組合中，台灣股票的比例平均超過 70–80%。</p>
+        <p class="body-text">本土偏誤的成因是多層次的：<strong>熟悉感幻覺</strong>（我認識台積電，所以它更安全）、<strong>資訊可得性</strong>（台灣財經媒體主要報導台灣市場）、<strong>稅務與法規便利性</strong>（台灣 ETF 無需複委託）、以及<strong>貨幣規避</strong>（不想承擔匯率風險）。這些理由各有合理之處，但在數據面前，過度的本土集中仍然是顯而易見的風險。</p>
+      </div>
+
+      <div class="data-row">
+        <div class="data-cell">
+          <div class="data-num">1.7%</div>
+          <div class="data-label">台灣股市佔全球<br/>市值的比例</div>
+        </div>
+        <div class="data-cell">
+          <div class="data-num">75%</div>
+          <div class="data-label">台灣散戶投資組合中<br/>台灣資產的平均比例</div>
+        </div>
+        <div class="data-cell">
+          <div class="data-num">44x</div>
+          <div class="data-label">實際持有比例<br/>vs. 全球市值比例的倍數</div>
+        </div>
+      </div>
+
+      <div class="content-block">
+        <div class="block-label">本土偏誤的財務代價：台灣 vs. 全球</div>
+        <p class="body-text">台灣股市高度集中於半導體和科技產業。台積電一家公司佔台灣加權指數約 30–35%，前十大成分股佔指數超過 60%。這意味著持有台灣指數，實際上高度集中於少數幾家公司和一個產業——這是單一地區、單一產業的雙重集中。</p>
+      </div>
+
+      <table class="home-bias-table">
+        <thead>
+          <tr>
+            <th>配置方式</th>
+            <th>實際持有內容</th>
+            <th>主要優點</th>
+            <th>主要風險</th>
+            <th>建議比例</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="td-name">100% 台灣<br/><span style="font-family:monospace;font-size:11px;color:var(--red);">純本土</span></td>
+            <td>0050、台灣個股，高度集中半導體與科技</td>
+            <td class="td-pro">無匯率風險、稅務簡單、熟悉度高、台股牛市報酬優異</td>
+            <td class="td-con">單一地區、單一產業集中；台灣地緣政治風險；若半導體週期反轉，衝擊巨大</td>
+            <td style="font-family:monospace;font-size:12px;color:var(--ink-muted);">不建議 — 過度集中</td>
+          </tr>
+          <tr>
+            <td class="td-name">台灣 + 美國<br/><span style="font-family:monospace;font-size:11px;color:var(--red);">雙市場</span></td>
+            <td>0050 + VTI 或 QQQ，台灣 40% + 美國 60%</td>
+            <td class="td-pro">降低地緣風險，受益美國長期成長，分散半導體集中度</td>
+            <td class="td-con">仍為科技股重度集中；美國市場也非全球；需承擔美元匯率風險</td>
+            <td style="font-family:monospace;font-size:12px;color:var(--ink-muted);">可接受 — 有改善</td>
+          </tr>
+          <tr>
+            <td class="td-name">台灣 + 全球<br/><span style="font-family:monospace;font-size:11px;color:var(--red);">本土加碼</span></td>
+            <td>VT 70% + 0050 30%，刻意超配台灣</td>
+            <td class="td-pro">全球分散為基底，本土加碼保留熟悉市場的額外曝險；稅務相對簡單部分</td>
+            <td class="td-con">台灣仍明顯超配（全球比例 1.7% vs. 持有 30%）；管理兩套系統增加複雜度</td>
+            <td style="font-family:monospace;font-size:12px;">合理 — 推薦範圍</td>
+          </tr>
+          <tr>
+            <td class="td-name">純全球市值<br/><span style="font-family:monospace;font-size:11px;color:var(--red);">市值加權</span></td>
+            <td>VT 100%，按全球市值比例持有，台灣約 1.7%</td>
+            <td class="td-pro">最大程度分散，無主觀判斷，費用最低，理論上最接近「市場組合」</td>
+            <td class="td-con">台灣稅務（海外所得課稅）、遺產稅疑慮；美元匯率風險；與台灣生活費用的貨幣不匹配</td>
+            <td style="font-family:monospace;font-size:12px;">數學最優 — 稅務需規劃</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="content-block">
+        <div class="block-label">台灣投資人的合理本土偏誤：理性的理由</div>
+        <p class="body-text">並非所有的本土偏誤都是非理性的。以下幾個理由，讓台灣投資人持有高於 1.7% 市值比例的台灣資產，在一定程度上是有財務邏輯的。問題不是「是否應該超配台灣」，而是「超配多少是合理範圍」。</p>
+      </div>
+
+      <div class="concept-list">
+        <div class="concept-item">
+          <div class="concept-term">貨幣匹配<br/>生活費用</div>
+          <div class="concept-def">你的退休生活費用以台幣支付。持有台幣計價資產，可以避免在匯率不利時被迫換匯。若美元在你提領時大幅貶值，100% 持有美元資產的實際購買力會縮水。一定比例的台幣資產，是對匯率風險的自然對沖。合理的台幣資產比例：20–40%。</div>
+        </div>
+        <div class="concept-item">
+          <div class="concept-term">稅務便利<br/>遺產規劃</div>
+          <div class="concept-def">台灣 ETF（0050、0056）適用台灣稅務規定，股利和資本利得的課稅方式相對清晰。海外 ETF（如在美國券商持有的 VT）可能面臨美國遺產稅（對非美國居民，超過 6 萬美元的美國資產）的風險，需要額外規劃。資產越大，這個考量越重要。</div>
+        </div>
+        <div class="concept-item">
+          <div class="concept-term">台積電的全球<br/>替代稀缺性</div>
+          <div class="concept-def">台積電在全球股市中的獨特性——佔據全球晶圓代工約 55% 的市佔率——使其成為全球科技供應鏈中無可替代的節點。這個稀缺性，加上台灣半導體生態系的整體競爭力，是支持一定程度台灣超配的產業基本面論點。但這個論點的侷限是：它同時意味著台灣承受高度地緣政治風險。</div>
+        </div>
+        <div class="concept-item">
+          <div class="concept-term">合理本土偏誤<br/>的建議上限</div>
+          <div class="concept-def">綜合貨幣匹配、稅務便利、遺產規劃等理由，台灣投資人持有 20–40% 的台灣資產是有合理依據的——超出這個範圍的本土集中，開始從「合理偏好」轉向「非理性集中」。以全球分散為主體（60–80%），本土超配為輔（20–40%），是目前較被廣泛認可的台灣投資人配置原則。</div>
+        </div>
+      </div>
+
+      <div class="content-block">
+        <div class="block-label">台灣投資人的實用全球配置框架</div>
+        <div class="steps">
+          <div class="step-item">
+            <div class="step-num">01</div>
+            <div class="step-content">
+              <div class="step-title">確定你的本土比例上限（建議 20–40%）</div>
+              <div class="step-desc">根據你的退休地點、貨幣需求、資產規模（影響遺產稅考量）和個人偏好，設定台灣資產的比例上限。這個決定應寫入你的 IPS，而不是每次市場波動時都重新思考。常見選擇：台灣 30% + 全球 70%，或台灣 20% + 全球 80%。</div>
+            </div>
+          </div>
+          <div class="step-item">
+            <div class="step-num">02</div>
+            <div class="step-content">
+              <div class="step-title">台灣部位以台灣市值型 ETF 為核心（非個股）</div>
+              <div class="step-desc">持有台灣資產，以 0050（市值型）而非 0056 或其他高股息 ETF 為核心。市值型 ETF 費用較低、持有最廣泛、長期總報酬通常優於高股息 ETF。個股選擇增加了不必要的集中度，即使是台積電單一持股，也增加了公司特有風險。</div>
+            </div>
+          </div>
+          <div class="step-item">
+            <div class="step-num">03</div>
+            <div class="step-content">
+              <div class="step-title">全球部位以 VT 或 VTI + VXUS 為核心</div>
+              <div class="step-desc">全球分散部位使用市值加權的全球股票 ETF（VT）或自行組合美國（VTI 60%）+ 非美國（VXUS 40%）。避免在全球部位中再度超配特定地區或主題，讓市值加權自動決定地理分配。</div>
+            </div>
+          </div>
+          <div class="step-item">
+            <div class="step-num">04</div>
+            <div class="step-content">
+              <div class="step-title">匯率風險接受而非迴避</div>
+              <div class="step-desc">美元匯率風險是持有全球資產不可避免的一部分。歷史上，台幣兌美元的長期走勢相對穩定，短期波動是雙向的。試圖完全迴避匯率風險的成本（放棄全球分散），通常高於直接承受匯率風險的代價。接受它，而非試圖消除它。</div>
+            </div>
+          </div>
+          <div class="step-item">
+            <div class="step-num">05</div>
+            <div class="step-content">
+              <div class="step-title">資產規模超過 300 萬台幣時，認真規劃海外遺產稅</div>
+              <div class="step-desc">美國遺產稅對非美國居民的免稅額只有 6 萬美元（約 190 萬台幣），超過部分適用 18–40% 稅率。若你的海外 ETF 持倉超過這個門檻，應諮詢稅務顧問評估風險，並考慮透過複委託或持有愛爾蘭註冊 ETF（如 IWDA）等方式規避。</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="highlight-box">
+        <div class="hl-label">一個簡單但有力的心理實驗</div>
+        <div class="hl-text">
+          問你自己：<strong>「如果我不是台灣人，我的投資組合會有多少比例在台灣？」</strong><br/><br/>
+          若你是美國人，你大概不會把 70% 的投資放在台灣。若你是德國人，也不會。那麼，作為台灣人，把 70% 放在台灣，僅僅因為你生長在這裡——這個理由，是財務邏輯，還是心理偏誤？<br/><br/>
+          這個問題沒有唯一正確答案，但它能幫助你誠實地評估：你的配置決策，有多少比例是基於財務理性，又有多少是因為「熟悉感」和「本能的家鄉信任」。
+        </div>
+      </div>
+
+      <div class="takeaway">
+        <div class="takeaway-label">本單元核心結論</div>
+        <div class="takeaway-text">本土偏誤不是非理性的，但過度的本土集中是不合理的。台灣投資人持有 20–40% 本土資產有合理依據（貨幣匹配、稅務便利、遺產規劃），但超過這個比例的集中，主要來自行為偏誤而非財務邏輯。以全球分散為基底，本土適度超配為補充——這是在財務理性與現實考量之間最均衡的台灣配置框架。</div>
+      </div>
+
+      <div class="tools-row">
+        <span class="tool-tag primary">台灣 vs. 全球配置比例決策工具</span>
+        <span class="tool-tag">海外遺產稅風險評估表</span>
+        <span class="tool-tag">台灣 + 全球配置範本（三種比例）</span>
+        <span class="tool-tag">複委託 vs. 海外券商稅務比較</span>
+      </div>
+    </section>
+
+  </div>
+</div>
+
+<!-- CHAPTER FOOTER -->
+<div class="chapter-footer">
+  <div>
+    <div class="cf-title">模組七 完成</div>
+    <h3 class="cf-heading">你已掌握資產配置的完整框架</h3>
+    <p class="cf-text">從現代投資組合理論的數學基礎、生命週期的動態調整、通膨對購買力的長期侵蝕，到本土偏誤的理性分析——你現在擁有了建立和維護一個真正分散、動態且適合台灣投資人的資產配置所需的全部知識。</p>
+    <div class="cf-nav-links">
+      <a class="cf-link prev" href="chapter6.html">返回模組六</a>
+      <a class="cf-link" href="chapter8.html">前往模組八</a>
+    </div>
+  </div>
+  <div>
+    <div class="cf-title">下一模組</div>
+    <h3 class="cf-heading">模組八：稅務規劃與合法節稅</h3>
+    <p class="cf-text">投資報酬的最後一道關卡是稅務。你將學習台灣現行的投資相關稅制、股利所得的優化策略、海外所得的申報邏輯、以及如何透過合法的稅務規劃，讓你實際保留更多的投資報酬——這是被嚴重低估的財務技能。</p>
+  </div>
+</div>
+
+<footer class="site-footer">
+  <div class="sf-logo">FINANCE<span>.</span>COURSE</div>
+  <div class="sf-copy">個人理財與資產配置基礎 · 模組七 / 共十模組</div>
+</footer>
+
+<script>
+  window.addEventListener('scroll', () => {
+    const el = document.documentElement;
+    const progress = el.scrollTop / (el.scrollHeight - el.clientHeight) * 100;
+    document.getElementById('progress-bar').style.width = progress + '%';
+  });
+
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+  }, { threshold: 0.07 });
+
+  document.querySelectorAll('.lesson').forEach(el => observer.observe(el));
+
+  const sideLinks = document.querySelectorAll('.lesson-nav a');
+  const topLinks  = document.querySelectorAll('.nav-links a[href^="#"]');
+
+  const sideObserver = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        const id = e.target.id;
+        sideLinks.forEach(a => a.classList.toggle('active', a.getAttribute('href') === '#' + id));
+        topLinks.forEach(a  => a.classList.toggle('active', a.getAttribute('href') === '#' + id));
+      }
+    });
+  }, { threshold: 0.45 });
+
+  document.querySelectorAll('.lesson').forEach(el => sideObserver.observe(el));
+</script>
+</body>
+</html>

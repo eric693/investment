@@ -1,0 +1,1227 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>模組五：投資心理學與行為財務</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@300;400;500;600;700;900&family=IBM+Plex+Mono:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --cream:        #F5F0E8;
+      --cream-dark:   #EDE6D6;
+      --cream-mid:    #E4DBC8;
+      --cream-border: #D0C4AC;
+      --ink:          #1A1510;
+      --ink-light:    #3D3228;
+      --ink-muted:    #7A6E62;
+      --red:          #C0392B;
+      --red-dark:     #96281B;
+      --red-wash:     #F0E0DD;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; font-size: 16px; }
+
+    body {
+      background: var(--cream);
+      color: var(--ink);
+      font-family: 'Noto Serif TC', Georgia, serif;
+      line-height: 1.8;
+      overflow-x: hidden;
+    }
+
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 9000;
+    }
+
+    #progress-bar {
+      position: fixed; top: 0; left: 0;
+      height: 2px; background: var(--red);
+      z-index: 9999; transition: width 0.08s linear;
+    }
+
+    /* ── TOP NAV ── */
+    .top-nav {
+      position: sticky; top: 0; z-index: 500;
+      background: var(--cream-dark);
+      border-bottom: 1px solid var(--cream-border);
+      padding: 0 60px;
+      display: flex; align-items: center; justify-content: space-between;
+      height: 52px;
+    }
+    .nav-breadcrumb { font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.14em; color: var(--ink-muted); text-transform: uppercase; }
+    .nav-breadcrumb span { color: var(--red); }
+    .nav-links { display: flex; }
+    .nav-links a {
+      font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.12em;
+      text-transform: uppercase; color: var(--ink-muted); text-decoration: none;
+      padding: 0 20px; height: 52px; display: flex; align-items: center;
+      border-left: 1px solid var(--cream-border); transition: color 0.2s, background 0.2s;
+    }
+    .nav-links a:hover { color: var(--ink); background: var(--cream-mid); }
+    .nav-links a.active { color: var(--red); }
+
+    /* ── HERO ── */
+    .hero { padding: 100px 60px 80px; border-bottom: 2px solid var(--ink); position: relative; overflow: hidden; }
+    .hero-rule { position: absolute; top: 44px; left: 60px; right: 60px; height: 1px; background: var(--ink); }
+    .hero-meta { font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-muted); margin-bottom: 32px; display: flex; align-items: center; gap: 20px; }
+    .hero-meta .dot { width: 4px; height: 4px; background: var(--red); display: inline-block; }
+    .hero-meta .mod-label { color: var(--red); font-weight: 500; }
+    .hero-title { font-size: clamp(40px, 7vw, 88px); font-weight: 900; line-height: 1.0; letter-spacing: -0.025em; max-width: 900px; }
+    .hero-title .line2 { display: block; color: var(--red); }
+    .hero-deck { margin-top: 28px; max-width: 600px; font-size: 17px; font-weight: 300; color: var(--ink-light); line-height: 1.9; }
+    .hero-meta-bottom { margin-top: 48px; display: flex; gap: 40px; }
+    .meta-item { display: flex; flex-direction: column; gap: 4px; }
+    .meta-label { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--ink-muted); }
+    .meta-value { font-family: 'IBM Plex Mono', monospace; font-size: 18px; font-weight: 600; color: var(--ink); }
+    .hero-number { position: absolute; right: 60px; bottom: -20px; font-family: 'IBM Plex Mono', monospace; font-size: 220px; font-weight: 600; color: var(--cream-border); line-height: 1; user-select: none; pointer-events: none; letter-spacing: -0.05em; }
+
+    /* ── LAYOUT ── */
+    .page-body { display: grid; grid-template-columns: 220px 1fr; }
+
+    /* ── SIDEBAR ── */
+    .lesson-nav { border-right: 1px solid var(--cream-border); padding: 48px 28px; position: sticky; top: 52px; height: calc(100vh - 52px); overflow-y: auto; background: var(--cream-dark); }
+    .lesson-nav-title { font-family: 'IBM Plex Mono', monospace; font-size: 9px; letter-spacing: 0.25em; text-transform: uppercase; color: var(--ink-muted); margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px solid var(--cream-border); }
+    .lesson-nav a { display: block; padding: 10px 0; font-size: 13px; font-weight: 500; color: var(--ink-muted); text-decoration: none; transition: color 0.18s; line-height: 1.45; border-bottom: 1px solid var(--cream-border); }
+    .lesson-nav a:last-child { border-bottom: none; }
+    .lesson-nav a:hover { color: var(--ink); }
+    .lesson-nav a.active { color: var(--red); }
+    .lesson-nav .ln-num { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.1em; color: var(--cream-border); display: block; margin-bottom: 2px; transition: color 0.18s; }
+    .lesson-nav a.active .ln-num { color: var(--red); }
+    .lesson-nav a:hover .ln-num { color: var(--ink-muted); }
+
+    /* ── LESSON ── */
+    .lessons-content { padding: 0; }
+    .lesson { padding: 80px 80px 72px; border-bottom: 1px solid var(--cream-border); opacity: 0; transform: translateY(18px); transition: opacity 0.55s ease, transform 0.55s ease; }
+    .lesson.visible { opacity: 1; transform: translateY(0); }
+    .lesson:nth-child(even) { background: var(--cream-dark); }
+
+    .lesson-header { margin-bottom: 52px; padding-bottom: 36px; border-bottom: 1px solid var(--cream-border); }
+    .lesson-tag-row { display: flex; align-items: center; gap: 16px; margin-bottom: 16px; }
+    .lesson-num-tag { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--red); font-weight: 500; }
+    .lesson-duration { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.15em; color: var(--ink-muted); }
+    .lesson-title { font-size: clamp(22px, 3vw, 34px); font-weight: 700; line-height: 1.25; letter-spacing: -0.01em; margin-bottom: 12px; }
+    .lesson-subtitle { font-size: 15px; font-weight: 300; color: var(--ink-muted); line-height: 1.7; max-width: 560px; }
+
+    /* ── SHARED COMPONENTS ── */
+    .content-block { margin-bottom: 48px; }
+    .block-label { font-family: 'IBM Plex Mono', monospace; font-size: 9px; letter-spacing: 0.28em; text-transform: uppercase; color: var(--ink-muted); margin-bottom: 16px; padding-bottom: 8px; border-bottom: 1px solid var(--cream-border); }
+    .body-text { font-size: 15.5px; line-height: 2.0; color: var(--ink-light); }
+    .body-text + .body-text { margin-top: 20px; }
+    .body-text strong { color: var(--ink); font-weight: 600; }
+
+    .pull-quote { margin: 40px 0; padding: 28px 0 28px 36px; border-left: 3px solid var(--red); }
+    .pull-quote-text { font-size: 19px; font-weight: 500; line-height: 1.7; color: var(--ink); font-style: italic; }
+    .pull-quote-source { margin-top: 12px; font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.1em; color: var(--red); }
+
+    .data-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--cream-border); border: 1px solid var(--cream-border); margin: 36px 0; }
+    .data-cell { background: var(--cream); padding: 28px; transition: background 0.2s; }
+    .lesson:nth-child(even) .data-cell { background: var(--cream-dark); }
+    .data-cell:hover { background: var(--red-wash); }
+    .data-num { font-family: 'IBM Plex Mono', monospace; font-size: 36px; font-weight: 600; color: var(--red); line-height: 1; margin-bottom: 8px; }
+    .data-label { font-size: 13px; color: var(--ink-muted); line-height: 1.5; }
+
+    .concept-list { margin: 28px 0; border: 1px solid var(--cream-border); }
+    .concept-item { display: grid; grid-template-columns: 200px 1fr; border-bottom: 1px solid var(--cream-border); }
+    .concept-item:last-child { border-bottom: none; }
+    .concept-term { padding: 20px 24px; font-weight: 600; font-size: 14px; line-height: 1.5; border-right: 1px solid var(--cream-border); background: var(--cream-mid); }
+    .concept-def { padding: 20px 28px; font-size: 14px; color: var(--ink-muted); line-height: 1.7; }
+
+    .steps { margin: 28px 0; }
+    .step-item { display: grid; grid-template-columns: 52px 1fr; border-bottom: 1px solid var(--cream-border); }
+    .step-item:first-child { border-top: 1px solid var(--cream-border); }
+    .step-num { font-family: 'IBM Plex Mono', monospace; font-size: 11px; font-weight: 600; color: var(--cream); background: var(--ink); display: flex; align-items: center; justify-content: center; padding: 20px 0; }
+    .step-content { padding: 20px 28px; }
+    .step-title { font-size: 15px; font-weight: 600; margin-bottom: 6px; }
+    .step-desc { font-size: 13.5px; color: var(--ink-muted); line-height: 1.7; }
+
+    .highlight-box { background: var(--ink); color: var(--cream); padding: 36px 40px; margin: 36px 0; }
+    .highlight-box .hl-label { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--red); margin-bottom: 14px; }
+    .highlight-box .hl-text { font-size: 15px; line-height: 1.9; color: rgba(245,240,232,0.82); }
+    .highlight-box .hl-text strong { color: var(--cream); }
+
+    .formula-block { font-family: 'IBM Plex Mono', monospace; background: var(--cream-mid); border: 1px solid var(--cream-border); padding: 28px 32px; margin: 28px 0; font-size: 14px; line-height: 2.2; color: var(--ink); }
+    .formula-block .f-comment { color: var(--ink-muted); font-size: 12px; }
+    .formula-block .f-highlight { color: var(--red); font-weight: 600; }
+    .formula-block .f-good { color: var(--ink); font-weight: 600; }
+
+    .takeaway { margin-top: 48px; padding-top: 32px; border-top: 2px solid var(--ink); }
+    .takeaway-label { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.25em; text-transform: uppercase; color: var(--red); margin-bottom: 14px; }
+    .takeaway-text { font-size: 17px; font-weight: 500; font-style: italic; color: var(--ink); line-height: 1.75; }
+
+    .tools-row { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 40px; padding-top: 28px; border-top: 1px solid var(--cream-border); }
+    .tool-tag { font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.06em; padding: 6px 16px; border: 1px solid var(--cream-border); color: var(--ink-muted); }
+    .tool-tag.primary { border-color: var(--red); color: var(--red); background: var(--red-wash); }
+
+    /* ── BIAS CARDS ── */
+    .bias-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1px;
+      background: var(--cream-border);
+      border: 1px solid var(--cream-border);
+      margin: 28px 0;
+    }
+    .bias-card {
+      background: var(--cream);
+      padding: 28px 28px 24px;
+    }
+    .lesson:nth-child(even) .bias-card { background: var(--cream-dark); }
+    .bias-card:hover { background: var(--red-wash); }
+
+    .bias-num {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 28px;
+      font-weight: 600;
+      color: var(--cream-border);
+      line-height: 1;
+      margin-bottom: 10px;
+    }
+    .bias-name {
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 4px;
+      color: var(--ink);
+    }
+    .bias-en {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.12em;
+      color: var(--red);
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+    .bias-desc {
+      font-size: 13.5px;
+      color: var(--ink-muted);
+      line-height: 1.75;
+      margin-bottom: 12px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--cream-border);
+    }
+    .bias-example-label {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 9px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--ink-muted);
+      margin-bottom: 6px;
+    }
+    .bias-example {
+      font-size: 13px;
+      color: var(--ink-light);
+      line-height: 1.65;
+      font-style: italic;
+    }
+    .bias-fix-label {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 9px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--red);
+      margin-top: 12px;
+      margin-bottom: 6px;
+    }
+    .bias-fix {
+      font-size: 13px;
+      color: var(--ink-light);
+      line-height: 1.65;
+    }
+
+    /* ── LOSS AVERSION DIAGRAM ── */
+    .loss-diagram {
+      margin: 36px 0;
+      border: 1px solid var(--cream-border);
+      overflow: hidden;
+    }
+    .loss-diagram-header {
+      background: var(--ink);
+      padding: 16px 28px;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--red);
+    }
+    .loss-diagram-body {
+      display: grid;
+      grid-template-columns: 1fr 80px 1fr;
+      align-items: stretch;
+    }
+    .loss-side {
+      padding: 28px 28px;
+    }
+    .loss-side.gain { border-right: 1px solid var(--cream-border); }
+    .loss-side-label {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--ink-muted);
+      margin-bottom: 8px;
+    }
+    .loss-side-num {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 48px;
+      font-weight: 600;
+      line-height: 1;
+      margin-bottom: 8px;
+    }
+    .loss-side-num.gain-num { color: var(--ink-muted); }
+    .loss-side-num.loss-num { color: var(--red); }
+    .loss-side-desc {
+      font-size: 13.5px;
+      color: var(--ink-muted);
+      line-height: 1.7;
+    }
+    .loss-vs {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-right: 1px solid var(--cream-border);
+      border-left: 1px solid var(--cream-border);
+      background: var(--cream-mid);
+    }
+    .loss-vs-text {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--ink-muted);
+      writing-mode: vertical-rl;
+      letter-spacing: 0.1em;
+    }
+    .loss-finding {
+      padding: 20px 28px;
+      background: var(--cream-mid);
+      border-top: 1px solid var(--cream-border);
+      font-size: 14px;
+      color: var(--ink-light);
+      line-height: 1.7;
+      grid-column: 1 / -1;
+    }
+    .loss-finding strong { color: var(--red); }
+
+    /* ── COMPOUND INTEREST TABLE ── */
+    .compound-table {
+      margin: 28px 0;
+      border: 1px solid var(--cream-border);
+      width: 100%;
+    }
+    .compound-table thead tr { background: var(--ink); color: var(--cream); }
+    .compound-table th { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; padding: 13px 18px; text-align: left; font-weight: 500; border-right: 1px solid rgba(255,255,255,0.1); }
+    .compound-table th:last-child { border-right: none; }
+    .compound-table td { font-family: 'IBM Plex Mono', monospace; font-size: 13.5px; padding: 14px 18px; border-right: 1px solid var(--cream-border); border-bottom: 1px solid var(--cream-border); color: var(--ink-light); }
+    .compound-table td:last-child { border-right: none; }
+    .compound-table tr:last-child td { border-bottom: none; }
+    .compound-table tr:nth-child(even) td { background: var(--cream-dark); }
+    .compound-table .td-year { color: var(--ink-muted); }
+    .compound-table .td-highlight { color: var(--red); font-weight: 600; }
+    .compound-table .td-dim { color: var(--ink-muted); }
+
+    /* ── MARKET CYCLE ── */
+    .market-cycle {
+      margin: 36px 0;
+      border: 1px solid var(--cream-border);
+    }
+    .market-cycle-header {
+      background: var(--ink);
+      padding: 14px 24px;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: rgba(245,240,232,0.7);
+      display: grid;
+      grid-template-columns: 100px 1fr 1fr 1fr;
+      gap: 0;
+    }
+    .market-cycle-header div { border-right: 1px solid rgba(255,255,255,0.08); padding-right: 16px; }
+    .market-cycle-header div:last-child { border-right: none; padding-left: 16px; }
+    .market-cycle-row {
+      display: grid;
+      grid-template-columns: 100px 1fr 1fr 1fr;
+      border-bottom: 1px solid var(--cream-border);
+    }
+    .market-cycle-row:last-child { border-bottom: none; }
+    .mc-cell {
+      padding: 18px 20px;
+      font-size: 13.5px;
+      color: var(--ink-light);
+      border-right: 1px solid var(--cream-border);
+      line-height: 1.6;
+    }
+    .mc-cell:last-child { border-right: none; }
+    .mc-cell.phase { font-weight: 700; color: var(--ink); background: var(--cream-mid); font-size: 14px; }
+    .mc-cell .emotion { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--red); font-style: italic; display: block; margin-bottom: 4px; }
+    .mc-cell .action-wrong { color: var(--red); font-size: 12.5px; }
+    .mc-cell .action-right { color: var(--ink); font-size: 12.5px; font-weight: 500; }
+
+    /* ── IPS TEMPLATE ── */
+    .ips-block {
+      margin: 36px 0;
+      border: 1px solid var(--cream-border);
+    }
+    .ips-header {
+      background: var(--ink);
+      padding: 16px 28px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .ips-header-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--cream);
+    }
+    .ips-header-sub {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--red);
+    }
+    .ips-section {
+      border-bottom: 1px solid var(--cream-border);
+    }
+    .ips-section:last-child { border-bottom: none; }
+    .ips-section-label {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 9px;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--red);
+      padding: 12px 28px 0;
+    }
+    .ips-section-content {
+      padding: 8px 28px 20px;
+    }
+    .ips-field {
+      display: grid;
+      grid-template-columns: 180px 1fr;
+      border-bottom: 1px solid var(--cream-border);
+      font-size: 14px;
+    }
+    .ips-field:last-child { border-bottom: none; }
+    .ips-field-label {
+      padding: 14px 16px 14px 0;
+      color: var(--ink-muted);
+      font-size: 13px;
+      border-right: 1px solid var(--cream-border);
+    }
+    .ips-field-value {
+      padding: 14px 0 14px 16px;
+      color: var(--ink);
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+    .ips-field-value.blank {
+      color: var(--cream-border);
+      font-style: italic;
+    }
+
+    /* ── CHAPTER FOOTER ── */
+    .chapter-footer { background: var(--ink); color: var(--cream); padding: 72px 80px; display: grid; grid-template-columns: 1fr 1fr; gap: 80px; }
+    .cf-title { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--red); margin-bottom: 16px; }
+    .cf-heading { font-size: 22px; font-weight: 700; line-height: 1.3; margin-bottom: 16px; }
+    .cf-text { font-size: 14px; color: rgba(245,240,232,0.6); line-height: 1.85; }
+    .cf-nav-links { display: flex; gap: 32px; margin-top: 24px; }
+    .cf-link { font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--cream); text-decoration: none; border-bottom: 1px solid var(--red); padding-bottom: 2px; transition: color 0.2s; }
+    .cf-link:hover { color: var(--red); }
+    .cf-link.prev { border-color: rgba(245,240,232,0.3); }
+    .cf-link.prev:hover { border-color: var(--red); color: var(--red); }
+
+    /* ── SITE FOOTER ── */
+    .site-footer { padding: 24px 60px; border-top: 1px solid var(--cream-border); display: flex; justify-content: space-between; align-items: center; background: var(--cream-dark); }
+    .sf-logo { font-family: 'IBM Plex Mono', monospace; font-size: 12px; font-weight: 600; letter-spacing: 0.1em; }
+    .sf-logo span { color: var(--red); }
+    .sf-copy { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--ink-muted); }
+
+    .lesson-nav::-webkit-scrollbar { width: 3px; }
+    .lesson-nav::-webkit-scrollbar-thumb { background: var(--cream-border); }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 1024px) {
+      .page-body { grid-template-columns: 1fr; }
+      .lesson-nav { display: none; }
+      .lesson { padding: 56px 40px; }
+      .hero { padding: 72px 40px 60px; }
+      .hero-rule { left: 40px; right: 40px; }
+      .chapter-footer { padding: 56px 40px; gap: 48px; }
+      .site-footer { padding: 20px 40px; }
+      .top-nav { padding: 0 40px; }
+      .bias-grid { grid-template-columns: 1fr; }
+      .loss-diagram-body { grid-template-columns: 1fr; }
+      .loss-vs { display: none; }
+      .loss-side.gain { border-right: none; border-bottom: 1px solid var(--cream-border); }
+      .market-cycle-row { grid-template-columns: 90px 1fr 1fr; }
+      .market-cycle-header { grid-template-columns: 90px 1fr 1fr; }
+      .mc-cell:nth-child(4) { display: none; }
+      .market-cycle-header div:nth-child(4) { display: none; }
+      .ips-field { grid-template-columns: 140px 1fr; }
+    }
+    @media (max-width: 640px) {
+      .hero { padding: 56px 24px 48px; }
+      .hero-rule { left: 24px; right: 24px; }
+      .hero-number { display: none; }
+      .hero-meta { flex-wrap: wrap; }
+      .lesson { padding: 40px 24px; }
+      .data-row { grid-template-columns: 1fr; }
+      .concept-item { grid-template-columns: 1fr; }
+      .concept-term { border-right: none; border-bottom: 1px solid var(--cream-border); }
+      .market-cycle-row { grid-template-columns: 1fr; }
+      .market-cycle-header { display: none; }
+      .mc-cell { border-right: none; border-bottom: 1px solid var(--cream-border); }
+      .mc-cell:nth-child(4) { display: block; }
+      .mc-cell:last-child { border-bottom: none; }
+      .ips-field { grid-template-columns: 1fr; }
+      .ips-field-label { border-right: none; border-bottom: 1px solid var(--cream-border); padding: 10px 0; }
+      .ips-field-value { padding: 10px 0; }
+      .chapter-footer { grid-template-columns: 1fr; gap: 40px; padding: 40px 24px; }
+      .site-footer { padding: 20px 24px; flex-direction: column; gap: 8px; text-align: center; }
+      .top-nav { padding: 0 20px; }
+      .nav-links { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<div id="progress-bar"></div>
+
+<nav class="top-nav">
+  <div class="nav-breadcrumb">個人理財課程 / <span>模組五</span></div>
+  <div class="nav-links">
+    <a href="index.html">課程目錄</a>
+    <a href="chapter4.html">模組四</a>
+    <a href="#lesson-1" class="active">單元 01</a>
+    <a href="#lesson-2">單元 02</a>
+    <a href="#lesson-3">單元 03</a>
+    <a href="#lesson-4">單元 04</a>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="hero-rule"></div>
+  <div class="hero-meta">
+    <span class="mod-label">Module 05</span>
+    <span class="dot"></span>
+    <span>Behavioral Finance</span>
+    <span class="dot"></span>
+    <span>投資心理</span>
+  </div>
+  <h1 class="hero-title">
+    投資心理學
+    <span class="line2">與行為財務</span>
+  </h1>
+  <p class="hero-deck">投資最大的敵人不是市場波動，而是你自己的大腦。諾貝爾經濟學獎的研究揭示：人類的決策系統存在系統性缺陷，會在投資中持續製造錯誤。理解這些缺陷，才能設計出真正有效的對抗系統。</p>
+  <div class="hero-meta-bottom">
+    <div class="meta-item">
+      <span class="meta-label">單元數</span>
+      <span class="meta-value">04</span>
+    </div>
+    <div class="meta-item">
+      <span class="meta-label">學習時間</span>
+      <span class="meta-value">88 min</span>
+    </div>
+    <div class="meta-item">
+      <span class="meta-label">難度</span>
+      <span class="meta-value">中級</span>
+    </div>
+    <div class="meta-item">
+      <span class="meta-label">附件</span>
+      <span class="meta-value">4 份</span>
+    </div>
+  </div>
+  <div class="hero-number">05</div>
+</header>
+
+<div class="page-body">
+
+  <aside class="lesson-nav">
+    <div class="lesson-nav-title">本章單元</div>
+    <a href="#lesson-1" class="active">
+      <span class="ln-num">05—01</span>
+      損失趨避：為何賠錢比賺錢更痛
+    </a>
+    <a href="#lesson-2">
+      <span class="ln-num">05—02</span>
+      七大投資認知偏誤
+    </a>
+    <a href="#lesson-3">
+      <span class="ln-num">05—03</span>
+      複利的力量：時間才是資本
+    </a>
+    <a href="#lesson-4">
+      <span class="ln-num">05—04</span>
+      建立投資紀律的系統設計
+    </a>
+  </aside>
+
+  <div class="lessons-content">
+
+    <!-- ════════════════════════════════ LESSON 1 ════════════════════════════════ -->
+    <section class="lesson" id="lesson-1">
+      <div class="lesson-header">
+        <div class="lesson-tag-row">
+          <span class="lesson-num-tag">Lesson 05—01</span>
+          <span class="lesson-duration">約 22 分鐘</span>
+        </div>
+        <h2 class="lesson-title">損失趨避<br/>為何賠錢比賺錢更痛苦</h2>
+        <p class="lesson-subtitle">1979 年，兩位心理學家的實驗顛覆了「人類是理性決策者」的經濟學假設，並為行為財務學奠定了基礎。他們的發現，直接解釋了為何大多數投資人的實際報酬，遠低於他們持有的基金報酬。</p>
+      </div>
+
+      <div class="content-block">
+        <div class="block-label">展望理論：人類決策的真實模型</div>
+        <p class="body-text">Daniel Kahneman 與 Amos Tversky 在 1979 年提出「展望理論（Prospect Theory）」，Kahneman 後來因此獲得 2002 年諾貝爾經濟學獎。這個理論的核心發現只有一句話：<strong>人類對損失的心理痛苦，約為同等金額獲益帶來快樂的 2–2.5 倍。</strong></p>
+        <p class="body-text">這不是個人弱點，而是人類大腦的進化設定。在遠古環境中，「失去食物」比「得到食物」帶來更嚴重的生存威脅，因此大腦對損失訊號的反應被放大了。這個在石器時代有助生存的設定，在現代金融市場中卻成了系統性的決策障礙。</p>
+      </div>
+
+      <div class="loss-diagram">
+        <div class="loss-diagram-header">損失趨避的不對稱性</div>
+        <div class="loss-diagram-body">
+          <div class="loss-side gain">
+            <div class="loss-side-label">獲得 10,000 元</div>
+            <div class="loss-side-num gain-num">+1x</div>
+            <div class="loss-side-desc">賺到 1 萬元帶來的快樂感。大腦將此視為正向回饋，但反應相對平緩——尤其在已有一定財富後，邊際快樂遞減明顯。</div>
+          </div>
+          <div class="loss-vs">
+            <div class="loss-vs-text">vs.</div>
+          </div>
+          <div class="loss-side">
+            <div class="loss-side-label">損失 10,000 元</div>
+            <div class="loss-side-num loss-num">-2.5x</div>
+            <div class="loss-side-desc">賠掉 1 萬元帶來的痛苦感，約為賺到同等金額快樂的 2.5 倍。大腦啟動威脅反應，促使快速行動以「停止損失」——無論這個行動在財務上是否理性。</div>
+          </div>
+          <div class="loss-finding">
+            <strong>投資上的實際影響：</strong>當投資組合下跌 20%，大腦感受到的痛苦，相當於上漲 50% 的快樂。這解釋了為何投資人在市場崩盤時爭相賣出——即便長期持有才是正確選擇，短期痛苦的壓力仍讓大多數人做出了損害長期利益的決定。
+          </div>
+        </div>
+      </div>
+
+      <div class="content-block">
+        <div class="block-label">損失趨避在投資行為中的四種表現</div>
+        <div class="concept-list">
+          <div class="concept-item">
+            <div class="concept-term">處置效應<br/>Disposition Effect</div>
+            <div class="concept-def">過早賣出獲利的股票（鎖定獲利，消除「失去獲利」的焦慮），同時長期持有虧損股票（不賣就沒有「真正賠錢」的心理帳戶關閉感）。結果是持續賣出好股票、留下壞股票——正好相反的操作。</div>
+          </div>
+          <div class="concept-item">
+            <div class="concept-term">心理帳戶<br/>Mental Accounting</div>
+            <div class="concept-def">把不同來源的錢放在不同的「心理帳戶」，用不同的標準對待。例如：把年終獎金視為「可以賭一把」的閒錢，卻對薪資儲蓄極為謹慎——儘管兩者都是同等真實的財富。</div>
+          </div>
+          <div class="concept-item">
+            <div class="concept-term">現狀偏誤<br/>Status Quo Bias</div>
+            <div class="concept-def">強烈傾向維持現狀、避免改變，因為任何改變都意味著放棄某樣東西。投資上表現為：不願意調整明顯表現欠佳的投資組合，因為「調整」本身被大腦感知為一種「損失」。</div>
+          </div>
+          <div class="concept-item">
+            <div class="concept-term">沉沒成本謬誤<br/>Sunk Cost Fallacy</div>
+            <div class="concept-def">繼續持有虧損投資，僅僅因為「已經投入了這麼多」——即便理性分析顯示應該停損出場。沉沒成本在財務決策中永遠不應考慮，但大腦的損失規避本能讓我們很難做到這一點。</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="data-row">
+        <div class="data-cell">
+          <div class="data-num">2.5x</div>
+          <div class="data-label">損失的心理痛苦<br/>vs. 等額獲益的快樂</div>
+        </div>
+        <div class="data-cell">
+          <div class="data-num">4.7%</div>
+          <div class="data-label">美國投資人 20 年平均<br/>實際年化報酬率</div>
+        </div>
+        <div class="data-cell">
+          <div class="data-num">10.2%</div>
+          <div class="data-label">同期標普 500<br/>年化報酬率</div>
+        </div>
+      </div>
+
+      <div class="highlight-box">
+        <div class="hl-label">報酬率差距的真相：行為缺口</div>
+        <div class="hl-text">美國金融研究機構 DALBAR 的長期研究發現，在過去 20 年，標普 500 指數年化報酬約 <strong>10.2%</strong>，但一般投資人的實際年化報酬只有 <strong>4.7%</strong>。這將近 5.5 個百分點的差距，不是來自費用，不是來自選到了爛股票，而是來自投資人在市場高點買入、低點賣出的行為——損失趨避所驅動的情緒決策，是這個「行為缺口」最主要的來源。</div>
+      </div>
+
+      <div class="content-block">
+        <div class="block-label">對抗損失趨避的三個實用策略</div>
+        <div class="steps">
+          <div class="step-item">
+            <div class="step-num">01</div>
+            <div class="step-content">
+              <div class="step-title">降低查看投資組合的頻率</div>
+              <div class="step-desc">每天查看投資組合，意味著你每天都在被市場波動激發損失趨避反應。研究顯示，投資人查看帳戶的頻率越高，做出情緒性交易的機率越高。設定每月或每季才查看一次的規則，從根本上減少損失趨避被觸發的次數。</div>
+            </div>
+          </div>
+          <div class="step-item">
+            <div class="step-num">02</div>
+            <div class="step-content">
+              <div class="step-title">把「下跌」重新框架為「折扣」</div>
+              <div class="step-desc">市場下跌時，你正在用更低的價格購買未來相同的企業獲利能力。有意識地把「我虧損了 X%」的敘述，改為「我購買的資產現在打了 X 折」。這個認知框架的轉換，並非自我欺騙，而是更符合長期投資邏輯的事實陳述。</div>
+            </div>
+          </div>
+          <div class="step-item">
+            <div class="step-num">03</div>
+            <div class="step-content">
+              <div class="step-title">預先設定「市場崩盤行動計劃」</div>
+              <div class="step-desc">在情緒平靜時預先寫下：當市場下跌 20%、30%、40% 時，你將採取什麼行動。這份文件在崩盤發生時成為你的決策錨點，對抗大腦損失趨避機制所產生的「快逃」衝動。有書面計劃的投資人，在市場崩盤時做出衝動決策的比例顯著低於沒有計劃的投資人。</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="takeaway">
+        <div class="takeaway-label">本單元核心結論</div>
+        <div class="takeaway-text">損失趨避是人類進化的產物，無法被消除，只能被設計繞過。理解它的存在，讓你在感受到賣出衝動時，能夠暫停並問自己：「這個決定是基於財務邏輯，還是基於對損失的恐懼？」這一個問題，長期而言可能為你保留數十萬元的報酬。</div>
+      </div>
+
+      <div class="tools-row">
+        <span class="tool-tag primary">市場崩盤行動計劃模板</span>
+        <span class="tool-tag">投資行為偏誤自我檢測表</span>
+      </div>
+    </section>
+
+    <!-- ════════════════════════════════ LESSON 2 ════════════════════════════════ -->
+    <section class="lesson" id="lesson-2">
+      <div class="lesson-header">
+        <div class="lesson-tag-row">
+          <span class="lesson-num-tag">Lesson 05—02</span>
+          <span class="lesson-duration">約 24 分鐘</span>
+        </div>
+        <h2 class="lesson-title">七大投資<br/>認知偏誤</h2>
+        <p class="lesson-subtitle">行為財務學研究記錄了數十種影響投資決策的認知偏誤。這個單元精選七種對台灣投資人影響最深的偏誤，每一種都附有真實情境案例與具體的對抗工具。</p>
+      </div>
+
+      <div class="content-block">
+        <div class="block-label">為何「聰明人」在投資上也會犯錯</div>
+        <p class="body-text">認知偏誤不是智商的問題，而是大腦處理資訊的捷徑系統所產生的系統性錯誤。Kahneman 在《快思慢想》中將大腦分為「系統一」（快速、直覺、情緒）和「系統二」（慢速、邏輯、理性）。投資決策需要系統二主導，但市場波動、媒體雜音與社群討論，不斷激活系統一，讓情緒替代邏輯主導決策。</p>
+        <p class="body-text"><strong>意識到偏誤的存在，是對抗它的第一步。</strong>以下七種偏誤，每一種你都可能在過去的投資決策中找到自己的影子。</p>
+      </div>
+
+      <div class="bias-grid">
+
+        <div class="bias-card">
+          <div class="bias-num">01</div>
+          <div class="bias-name">確認偏誤</div>
+          <div class="bias-en">Confirmation Bias</div>
+          <div class="bias-desc">人傾向於尋找、解讀和記住符合自己既有信念的資訊，同時忽略或貶低與之相悖的資訊。在投資中，這導致投資人在買入某支股票後，只看到支持這個決定的好消息，而對壞消息視而不見。</div>
+          <div class="bias-example-label">典型情境</div>
+          <div class="bias-example">「我研究過這家公司，它一定會漲。」買入後，每一則正面新聞都被視為確認，負面消息則被解讀為「媒體誤導」或「短暫干擾」。</div>
+          <div class="bias-fix-label">對抗方法</div>
+          <div class="bias-fix">主動搜尋「反方論點」。在做任何投資決定前，強迫自己列出五個這筆投資可能失敗的理由，並認真評估它們。</div>
+        </div>
+
+        <div class="bias-card">
+          <div class="bias-num">02</div>
+          <div class="bias-name">從眾效應</div>
+          <div class="bias-en">Herding Behavior</div>
+          <div class="bias-desc">在不確定情境下，人傾向跟隨多數人的行動，把「大家都在買」視為決策依據。在金融市場，這是泡沫形成的主要機制——資產價格在大量跟風買入後遠超實際價值，直到崩盤。</div>
+          <div class="bias-example-label">典型情境</div>
+          <div class="bias-example">2021 年 GameStop、各類迷因股、NFT 熱潮，以及台灣本土的各種飆股事件——進場時理由往往是「大家都在買，不買虧到了」。</div>
+          <div class="bias-fix-label">對抗方法</div>
+          <div class="bias-fix">在「大家都在買」的時候，問自己：「若沒有人跟我說這件事，我今天會主動買入嗎？」若答案是否，那就是從眾，而非判斷。</div>
+        </div>
+
+        <div class="bias-card">
+          <div class="bias-num">03</div>
+          <div class="bias-name">近因偏誤</div>
+          <div class="bias-en">Recency Bias</div>
+          <div class="bias-desc">過度重視近期發生的事件，認為近期的趨勢會持續。市場連續上漲，就預期它會繼續漲；市場連跌，就預期它會繼續跌。這讓投資人在牛市末期最樂觀、在熊市底部最悲觀——恰好做出最壞的決定。</div>
+          <div class="bias-example-label">典型情境</div>
+          <div class="bias-example">2020 年 3 月市場崩盤時，許多投資人賣出或停止投入，錯過了隨後 12 個月 80% 的漲幅。2021 年末幾乎所有人都相信市場會繼續創高。</div>
+          <div class="bias-fix-label">對抗方法</div>
+          <div class="bias-fix">定期回顧 20 年以上的市場歷史圖表。每次產生「這次不一樣」的想法時，查閱過去每一次人們說「這次不一樣」後發生了什麼。</div>
+        </div>
+
+        <div class="bias-card">
+          <div class="bias-num">04</div>
+          <div class="bias-name">錨定效應</div>
+          <div class="bias-en">Anchoring Effect</div>
+          <div class="bias-desc">決策時過度依賴最先接收到的資訊（錨點）。在投資中，「買入價格」是最常見的錨點——投資人往往以買入價衡量是否獲利，而非以當前的實際價值和未來前景判斷持有的合理性。</div>
+          <div class="bias-example-label">典型情境</div>
+          <div class="bias-example">「我是 150 元買的，現在跌到 80 元，等它回到 150 元我就賣。」這個決策以買入價為錨，而非以公司目前的基本面和合理估值為錨。</div>
+          <div class="bias-fix-label">對抗方法</div>
+          <div class="bias-fix">定期問自己：「如果我今天才第一次看到這個投資，以它目前的價格和狀況，我會買入嗎？」若答案是否，持有的理由只是錨定，而非判斷。</div>
+        </div>
+
+        <div class="bias-card">
+          <div class="bias-num">05</div>
+          <div class="bias-name">過度自信偏誤</div>
+          <div class="bias-en">Overconfidence Bias</div>
+          <div class="bias-desc">高估自己的預測能力和資訊優勢。研究顯示，個人投資者普遍高估自己選股能力——超過 70% 的人認為自己的投資判斷優於平均水準，但統計上只有約 20% 的主動投資者能長期打敗指數。</div>
+          <div class="bias-example-label">典型情境</div>
+          <div class="bias-example">「我做了很多功課，這家公司一定會漲。」頻繁交易（因為相信自己能抓住最佳時機），導致交易成本大幅侵蝕報酬，且實際報酬往往低於持有指數型基金。</div>
+          <div class="bias-fix-label">對抗方法</div>
+          <div class="bias-fix">建立「投資決策日誌」，記下每次買賣的理由和預期。定期回顧，誠實評估你的預測準確率。數據是對抗過度自信最有效的工具。</div>
+        </div>
+
+        <div class="bias-card">
+          <div class="bias-num">06</div>
+          <div class="bias-name">可得性捷思</div>
+          <div class="bias-en">Availability Heuristic</div>
+          <div class="bias-desc">以「容易想到」的例子評估機率，而非客觀統計數據。媒體大量報導的事件，在腦中更容易浮現，讓人高估其發生機率。這讓投資人過度重視新聞事件，並以此做出投資決策。</div>
+          <div class="bias-example-label">典型情境</div>
+          <div class="bias-example">看到媒體持續報導某個產業的負面新聞，便認為整個產業即將崩潰，大量拋售相關持倉——而實際上媒體報導量與投資報酬之間幾乎沒有穩定的相關性。</div>
+          <div class="bias-fix-label">對抗方法</div>
+          <div class="bias-fix">在任何受媒體新聞影響的投資決策前，停下來問：「這件事在過去歷史上發生過幾次？長期結果是什麼？」以基率（base rate）取代近期印象。</div>
+        </div>
+
+        <div class="bias-card">
+          <div class="bias-num">07</div>
+          <div class="bias-name">後見之明偏誤</div>
+          <div class="bias-en">Hindsight Bias</div>
+          <div class="bias-desc">事後回顧時，認為當初的結果「顯而易見」，高估了自己事前預測的能力。這使投資人建立起虛假的自信，認為下一次同樣能預測到市場走勢，導致在未來重複過度自信的錯誤。</div>
+          <div class="bias-example-label">典型情境</div>
+          <div class="bias-example">「2020 年 3 月市場崩盤，我當時就知道 COVID 會影響市場。」事實是當時沒有人確定反彈會來、多快到來，但事後回顧讓這個記憶被美化了。</div>
+          <div class="bias-fix-label">對抗方法</div>
+          <div class="bias-fix">在每次做投資決策時，記下你「不確定的地方」。事後回顧時，誠實對照「我當時知道什麼、不知道什麼」，防止記憶被後見之明改寫。</div>
+        </div>
+
+      </div>
+
+      <div class="pull-quote">
+        <div class="pull-quote-text">「在投資中，最危險的四個字不是任何市場術語，而是：『這次不一樣。』它們是過去每一次泡沫頂點和崩盤底部的共同心聲。」</div>
+        <div class="pull-quote-source">— Sir John Templeton，傳奇投資人</div>
+      </div>
+
+      <div class="takeaway">
+        <div class="takeaway-label">本單元核心結論</div>
+        <div class="takeaway-text">七種偏誤，七個你在不知不覺中虧損財富的方式。認識它們，不是為了讓你對自己的每一個決定都感到懷疑，而是讓你在情緒強烈的時刻——市場大漲大跌、熱門資產沸沸揚揚——能夠暫停，問自己：「我現在受到的是哪一種偏誤的影響？」</div>
+      </div>
+
+      <div class="tools-row">
+        <span class="tool-tag primary">七大偏誤快速識別卡片</span>
+        <span class="tool-tag">投資決策日誌模板</span>
+        <span class="tool-tag">偏誤自我評估問卷</span>
+      </div>
+    </section>
+
+    <!-- ════════════════════════════════ LESSON 3 ════════════════════════════════ -->
+    <section class="lesson" id="lesson-3">
+      <div class="lesson-header">
+        <div class="lesson-tag-row">
+          <span class="lesson-num-tag">Lesson 05—03</span>
+          <span class="lesson-duration">約 22 分鐘</span>
+        </div>
+        <h2 class="lesson-title">複利的力量<br/>時間才是最大資本</h2>
+        <p class="lesson-subtitle">愛因斯坦據說稱複利為「世界第八大奇蹟」。無論這句話的出處是否屬實，複利對財富積累的影響確實是驚人的——但只有在你足夠早開始、並且足夠長期持有的前提下。</p>
+      </div>
+
+      <div class="content-block">
+        <div class="block-label">複利的數學基礎</div>
+        <p class="body-text">複利（Compound Interest）的本質是：你的收益本身也在產生收益。在第一年，你的報酬是本金的 r%；在第二年，你的報酬是（本金 + 第一年報酬）的 r%；以此類推，每一年的基數都比上一年更大。</p>
+        <p class="body-text">這個機制在短期內看起來並不驚人，但在時間軸拉長後，會呈現出指數型而非線性的增長曲線——這正是大多數人低估長期投資威力的原因：<strong>人腦習慣線性思考，卻身處指數型的複利世界。</strong></p>
+      </div>
+
+      <div class="formula-block">
+        <span class="f-comment">// 複利終值公式</span><br/><br/>
+        終值 = 本金 × (1 + 年化報酬率)<sup>投資年數</sup><br/><br/>
+        <span class="f-comment">// 每月投入 5,000 元，年化報酬率 7%</span><br/>
+        投資 10 年 → 本金投入 <span class="f-good">60 萬</span>　→　終值約 <span class="f-highlight">87 萬</span>（增長 45%）<br/>
+        投資 20 年 → 本金投入 <span class="f-good">120 萬</span>　→　終值約 <span class="f-highlight">261 萬</span>（增長 118%）<br/>
+        投資 30 年 → 本金投入 <span class="f-good">180 萬</span>　→　終值約 <span class="f-highlight">607 萬</span>（增長 237%）<br/>
+        投資 40 年 → 本金投入 <span class="f-good">240 萬</span>　→　終值約 <span class="f-highlight">1,314 萬</span>（增長 448%）<br/><br/>
+        <span class="f-comment">// 結論：報酬的絕大部分，發生在最後的 10–15 年</span>
+      </div>
+
+      <div class="content-block">
+        <div class="block-label">早開始 10 年的威力：數字說話</div>
+        <p class="body-text">以下用具體數字說明「早開始 10 年」與「晚開始 10 年」之間的真實差距，答案往往讓初次看到的人感到震驚。</p>
+      </div>
+
+      <table class="compound-table">
+        <thead>
+          <tr>
+            <th>情境</th>
+            <th>開始年齡</th>
+            <th>結束年齡</th>
+            <th>月投入</th>
+            <th>總投入本金</th>
+            <th>65 歲資產（7% 年化）</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="td-year">早鳥型</td>
+            <td>25 歲</td>
+            <td>65 歲</td>
+            <td>5,000 元</td>
+            <td class="td-dim">240 萬元</td>
+            <td class="td-highlight">1,314 萬元</td>
+          </tr>
+          <tr>
+            <td class="td-year">晚起型</td>
+            <td>35 歲</td>
+            <td>65 歲</td>
+            <td>5,000 元</td>
+            <td class="td-dim">180 萬元</td>
+            <td class="td-highlight">607 萬元</td>
+          </tr>
+          <tr>
+            <td class="td-year">晚起加倍型</td>
+            <td>35 歲</td>
+            <td>65 歲</td>
+            <td>10,000 元</td>
+            <td class="td-dim">360 萬元</td>
+            <td class="td-highlight">1,214 萬元</td>
+          </tr>
+          <tr>
+            <td class="td-year">最晚型</td>
+            <td>45 歲</td>
+            <td>65 歲</td>
+            <td>5,000 元</td>
+            <td class="td-dim">120 萬元</td>
+            <td class="td-highlight">261 萬元</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="highlight-box">
+        <div class="hl-label">數字背後的關鍵洞察</div>
+        <div class="hl-text">
+          「晚起加倍型」（35 歲開始，每月 1 萬元）投入的本金是「早鳥型」（25 歲開始，每月 5,000 元）的 1.5 倍，但 65 歲的最終資產卻仍少了 <strong>100 萬元</strong>。<br/><br/>
+          換句話說，<strong>25 歲時每月多存的 5,000 元，等於 35 歲時每月存 10,000 元也追不上的起跑優勢</strong>。時間的價值，在這個數字中得到了最清晰的體現。這也解釋了為何財務規劃師反覆強調：最重要的投資決定不是選什麼，而是「從今天開始」。
+        </div>
+      </div>
+
+      <div class="content-block">
+        <div class="block-label">費用率對複利的侵蝕效應</div>
+        <p class="body-text">複利是財富積累的引擎，費用率則是這個引擎的摩擦力。投資工具的年費用率看似微不足道，但在複利的放大下，長期差距驚人。</p>
+      </div>
+
+      <div class="formula-block">
+        <span class="f-comment">// 費用率對 30 年投資的累積影響（本金 100 萬，報酬率 7%）</span><br/><br/>
+        費用率 <span class="f-good">0.1%</span>（低成本 ETF，如 VT）　→　30 年後：<span class="f-highlight">724 萬元</span><br/>
+        費用率 <span class="f-good">1.0%</span>（一般共同基金）　　　　→　30 年後：<span class="f-highlight">574 萬元</span><br/>
+        費用率 <span class="f-good">2.0%</span>（高費用主動型基金）　　→　30 年後：<span class="f-highlight">432 萬元</span><br/><br/>
+        <span class="f-comment">// 從費用率 0.1% 升至 2.0%，30 年後少了 292 萬元</span><br/>
+        <span class="f-comment">// 每多付 1% 費用，30 年後實際少了約 25% 的最終資產</span>
+      </div>
+
+      <div class="content-block">
+        <div class="block-label">複利思維的五個日常應用</div>
+        <div class="steps">
+          <div class="step-item">
+            <div class="step-num">01</div>
+            <div class="step-content">
+              <div class="step-title">把每一筆節省視為「未來複利的種子」</div>
+              <div class="step-desc">每節省 1,000 元並投入，在 30 年後（以 7% 計算）等同於 7,612 元。每一次消費決策，都是在選擇「現在的 1,000 元」還是「未來的 7,612 元」。這個框架不是要你不消費，而是讓消費決策更加有意識。</div>
+            </div>
+          </div>
+          <div class="step-item">
+            <div class="step-num">02</div>
+            <div class="step-content">
+              <div class="step-title">重視費用率，選擇低成本投資工具</div>
+              <div class="step-desc">費用率差 1%，在 30 年後影響約 25% 的最終資產。選擇費用率 0.1–0.3% 的指數型 ETF，而非費用率 1.5–2.5% 的主動型基金，是最容易執行、且幾乎沒有反論的財務決策。</div>
+            </div>
+          </div>
+          <div class="step-item">
+            <div class="step-num">03</div>
+            <div class="step-content">
+              <div class="step-title">不要中斷複利——持續投入比擇時更重要</div>
+              <div class="step-desc">因市場下跌而暫停投入，意味著中斷了複利的連續性。每次「等市場更明朗再買」的決定，背後都是讓資金在場外閒置的成本。Time in the market（時間在市場中）永遠勝過 timing the market（時機進入市場）。</div>
+            </div>
+          </div>
+          <div class="step-item">
+            <div class="step-num">04</div>
+            <div class="step-content">
+              <div class="step-title">讓薪資增長同步提高投入金額</div>
+              <div class="step-desc">每次加薪，立即提高定期定額扣款金額的 50%。從每月 5,000 元升至 6,000 元，看似只多 1,000 元，但在 25 年的時間軸上，這個差距在終值上可能超過 100 萬元。</div>
+            </div>
+          </div>
+          <div class="step-item">
+            <div class="step-num">05</div>
+            <div class="step-content">
+              <div class="step-title">不要為了短期稅務優惠頻繁交易</div>
+              <div class="step-desc">頻繁賣出獲利資產並重新買入，會觸發課稅並中斷複利的連續性。讓獲利在帳戶中持續複利，延後課稅時間點（稅務遞延效應），是長期投資人應善用的合法優勢。</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="takeaway">
+        <div class="takeaway-label">本單元核心結論</div>
+        <div class="takeaway-text">複利的威力不在於選到好股票，不在於判斷市場時機，而在於時間的長度和費用的低廉。愈早開始、費用愈低、中斷愈少——這三個變數，決定了你退休時的資產規模，遠比你選了什麼股票更重要。</div>
+      </div>
+
+      <div class="tools-row">
+        <span class="tool-tag primary">複利終值試算工具</span>
+        <span class="tool-tag">費用率影響比較表</span>
+        <span class="tool-tag">早晚開始差距計算器</span>
+      </div>
+    </section>
+
+    <!-- ════════════════════════════════ LESSON 4 ════════════════════════════════ -->
+    <section class="lesson" id="lesson-4">
+      <div class="lesson-header">
+        <div class="lesson-tag-row">
+          <span class="lesson-num-tag">Lesson 05—04</span>
+          <span class="lesson-duration">約 20 分鐘</span>
+        </div>
+        <h2 class="lesson-title">建立投資紀律<br/>的系統設計</h2>
+        <p class="lesson-subtitle">意志力是有限資源，靠自律投資終究會失敗。本單元教你用「系統設計」取代「自律意志」，讓正確的投資行為自動發生，讓錯誤的行為在發生之前就被攔截。</p>
+      </div>
+
+      <div class="content-block">
+        <div class="block-label">為何「知道」和「做到」之間存在巨大鴻溝</div>
+        <p class="body-text">幾乎所有人都「知道」應該長期持有、不應該在市場崩盤時賣出、應該規律投資而非擇時進出。但知道正確的投資原則，和在市場劇烈波動的情緒壓力下實際執行這些原則，是兩件截然不同的事。</p>
+        <p class="body-text">心理學家 BJ Fogg 在《設計你的小習慣》中指出：<strong>行為 = 動機 × 能力 × 觸發點</strong>。要讓正確的投資行為持續發生，不應依賴動機（它會波動），而應設計讓正確行為「能力最低、觸發點最自動」的系統環境。</p>
+      </div>
+
+      <div class="content-block">
+        <div class="block-label">市場各階段的情緒陷阱與正確應對</div>
+      </div>
+
+      <div class="market-cycle">
+        <div class="market-cycle-header">
+          <div>市場階段</div>
+          <div>投資人情緒</div>
+          <div>常見錯誤行為</div>
+          <div>正確應對</div>
+        </div>
+        <div class="market-cycle-row">
+          <div class="mc-cell phase">牛市初期<br/><small style="font-weight:400;font-size:12px;">市場剛從低谷回升</small></div>
+          <div class="mc-cell"><span class="emotion">「還不確定，先觀望」</span>剛經歷崩盤的心理陰影仍在，對市場回升半信半疑，不敢進場。</div>
+          <div class="mc-cell"><div class="action-wrong">繼續等待更多確認信號，錯過早期最大漲幅。</div></div>
+          <div class="mc-cell"><div class="action-right">若已有既定的定期定額計劃，繼續執行；市場最強勁的漲幅通常在最不確定的階段。</div></div>
+        </div>
+        <div class="market-cycle-row">
+          <div class="mc-cell phase">牛市中期<br/><small style="font-weight:400;font-size:12px;">市場穩健上漲</small></div>
+          <div class="mc-cell"><span class="emotion">「感覺很好，我很擅長投資」</span>持續獲利讓過度自信偏誤增強，開始相信自己能選到更好的標的。</div>
+          <div class="mc-cell"><div class="action-wrong">從指數型基金切換至個股，增加槓桿，頻繁交易。</div></div>
+          <div class="mc-cell"><div class="action-right">維持既定配置，抵抗增加風險的誘惑。好表現是市場的功勞，不是選股能力。</div></div>
+        </div>
+        <div class="market-cycle-row">
+          <div class="mc-cell phase">牛市末期<br/><small style="font-weight:400;font-size:12px;">市場創歷史新高</small></div>
+          <div class="mc-cell"><span class="emotion">「這次真的不一樣！」</span>從眾效應達到頂峰，FOMO（害怕錯過）情緒最強烈，周遭每個人都在談投資。</div>
+          <div class="mc-cell"><div class="action-wrong">大量集中投入、加槓桿，把緊急備用金也投入市場。</div></div>
+          <div class="mc-cell"><div class="action-right">執行預定的再平衡，不增加整體風險暴露，確保緊急備用金完好。</div></div>
+        </div>
+        <div class="market-cycle-row">
+          <div class="mc-cell phase">熊市初期<br/><small style="font-weight:400;font-size:12px;">市場開始下跌</small></div>
+          <div class="mc-cell"><span class="emotion">「先出來等跌完再買」</span>損失趨避被激活，想要「先停損再說」，相信自己能在底部重新買回。</div>
+          <div class="mc-cell"><div class="action-wrong">賣出持倉等待，結果市場在意想不到的時間點反彈，永遠找不到「對的」時機重新進場。</div></div>
+          <div class="mc-cell"><div class="action-right">對照崩盤行動計劃。若財務狀況穩健，繼續定期定額，把下跌視為折價購入機會。</div></div>
+        </div>
+        <div class="market-cycle-row">
+          <div class="mc-cell phase">熊市深處<br/><small style="font-weight:400;font-size:12px;">市場大幅下跌</small></div>
+          <div class="mc-cell"><span class="emotion">「一切都完了」</span>近因偏誤讓人相信下跌會持續，媒體充斥末日預言，每天打開帳戶都是痛苦。</div>
+          <div class="mc-cell"><div class="action-wrong">在最低點附近清倉，鎖定最大損失，並且心理創傷導致長期不敢再投資。</div></div>
+          <div class="mc-cell"><div class="action-right">停止查看帳戶（降低情緒觸發頻率），確認緊急備用金完整，繼續或加大定期定額。</div></div>
+        </div>
+      </div>
+
+      <div class="content-block">
+        <div class="block-label">投資政策宣言（IPS）：你的私人投資憲法</div>
+        <p class="body-text">投資政策宣言（Investment Policy Statement，IPS）是機構投資人（如退休基金、大學捐贈基金）廣泛使用的治理文件，個人投資者同樣可以使用它。<strong>IPS 是你在情緒平靜時，對情緒激動時的自己所做的預先承諾。</strong></p>
+        <p class="body-text">它的價值在於：當市場崩盤時，你翻開這份文件，看到的是你在清醒狀態下的判斷和承諾，而不是任由當下的恐懼做主。以下是一份個人 IPS 的模板架構：</p>
+      </div>
+
+      <div class="ips-block">
+        <div class="ips-header">
+          <div class="ips-header-title">個人投資政策宣言（IPS）模板</div>
+          <div class="ips-header-sub">填寫日期：____年____月____日</div>
+        </div>
+        <div class="ips-section">
+          <div class="ips-section-label">第一部分 — 投資目標</div>
+          <div class="ips-section-content">
+            <div class="ips-field">
+              <div class="ips-field-label">主要投資目標</div>
+              <div class="ips-field-value blank">例：在 2050 年前累積足夠退休資產，達到每年可提領 60 萬元的規模</div>
+            </div>
+            <div class="ips-field">
+              <div class="ips-field-label">目標資產規模</div>
+              <div class="ips-field-value blank">例：依 4% 法則，目標總資產 1,500 萬元</div>
+            </div>
+            <div class="ips-field">
+              <div class="ips-field-label">投資時間長度</div>
+              <div class="ips-field-value blank">例：25 年（距退休年齡）</div>
+            </div>
+          </div>
+        </div>
+        <div class="ips-section">
+          <div class="ips-section-label">第二部分 — 風險承受度</div>
+          <div class="ips-section-content">
+            <div class="ips-field">
+              <div class="ips-field-label">可接受最大回撤</div>
+              <div class="ips-field-value blank">例：-40%（歷史上曾發生，我能接受）</div>
+            </div>
+            <div class="ips-field">
+              <div class="ips-field-label">崩盤時的計劃</div>
+              <div class="ips-field-value blank">例：下跌 20% 不行動；下跌 30% 加大定期定額；下跌 40% 考慮單筆加碼</div>
+            </div>
+          </div>
+        </div>
+        <div class="ips-section">
+          <div class="ips-section-label">第三部分 — 資產配置</div>
+          <div class="ips-section-content">
+            <div class="ips-field">
+              <div class="ips-field-label">目標股債比</div>
+              <div class="ips-field-value blank">例：股票 80% / 債券 20%</div>
+            </div>
+            <div class="ips-field">
+              <div class="ips-field-label">核心持倉標的</div>
+              <div class="ips-field-value blank">例：VT 60% / 0050 20% / BND 20%</div>
+            </div>
+            <div class="ips-field">
+              <div class="ips-field-label">再平衡觸發條件</div>
+              <div class="ips-field-value blank">例：每年一次，或偏離目標配置超過 5%</div>
+            </div>
+          </div>
+        </div>
+        <div class="ips-section">
+          <div class="ips-section-label">第四部分 — 操作紀律</div>
+          <div class="ips-section-content">
+            <div class="ips-field">
+              <div class="ips-field-label">每月定期定額</div>
+              <div class="ips-field-value blank">例：每月 6 日自動扣款 8,000 元</div>
+            </div>
+            <div class="ips-field">
+              <div class="ips-field-label">查看帳戶頻率</div>
+              <div class="ips-field-value blank">例：每季一次，不在市場劇烈波動時查看</div>
+            </div>
+            <div class="ips-field">
+              <div class="ips-field-label">禁止行為清單</div>
+              <div class="ips-field-value blank">例：不單押個股；不借貸投資；不因新聞改變配置</div>
+            </div>
+          </div>
+        </div>
+        <div class="ips-section">
+          <div class="ips-section-label">第五部分 — 年度檢視</div>
+          <div class="ips-section-content">
+            <div class="ips-field">
+              <div class="ips-field-label">年度檢視日期</div>
+              <div class="ips-field-value blank">例：每年 12 月第一個週末</div>
+            </div>
+            <div class="ips-field">
+              <div class="ips-field-label">可修改本文件的條件</div>
+              <div class="ips-field-value blank">例：重大人生事件（結婚、生子、換工作）發生後，或距離目標年齡剩餘不足 10 年</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="content-block">
+        <div class="block-label">建立投資紀律的六個系統設計原則</div>
+        <div class="steps">
+          <div class="step-item">
+            <div class="step-num">01</div>
+            <div class="step-content">
+              <div class="step-title">自動化一切可以自動化的決策</div>
+              <div class="step-desc">定期定額、帳戶再平衡、股息再投入——凡是可以設定規則自動執行的投資行為，都應該自動化。每一個需要你主動決策的環節，都是情緒介入的機會。把這些機會減到最少。</div>
+            </div>
+          </div>
+          <div class="step-item">
+            <div class="step-num">02</div>
+            <div class="step-content">
+              <div class="step-title">增加「衝動操作」的摩擦力</div>
+              <div class="step-desc">不要讓賣出操作過於便利。設定交易前需要輸入文字確認、關閉 App 的快速交易功能、不在手機第一頁放置交易軟體。讓衝動賣出需要多幾個步驟，這幾秒的緩衝足以讓理性系統介入。</div>
+            </div>
+          </div>
+          <div class="step-item">
+            <div class="step-num">03</div>
+            <div class="step-content">
+              <div class="step-title">限制市場資訊的攝取量</div>
+              <div class="step-desc">取消財經新聞的 App 推播通知，設定「財務資訊攝取時間」（例如每週日 30 分鐘），而非全天候接收。研究顯示，金融新聞的攝取量與投資報酬率呈負相關——資訊越多，情緒越躁，決策越差。</div>
+            </div>
+          </div>
+          <div class="step-item">
+            <div class="step-num">04</div>
+            <div class="step-content">
+              <div class="step-title">設置「冷靜期」制度</div>
+              <div class="step-desc">規定任何超出既定計劃的投資操作（額外買入、賣出、更換標的），都需要等待 72 小時再執行。把這個規則寫入你的 IPS，作為對自己的承諾。絕大多數在 72 小時內仍然想執行的操作，才值得認真考慮。</div>
+            </div>
+          </div>
+          <div class="step-item">
+            <div class="step-num">05</div>
+            <div class="step-content">
+              <div class="step-title">定期回顧過去的錯誤決策</div>
+              <div class="step-desc">維護一份「投資錯誤日誌」，記錄每一次偏離計劃的操作、當時的情緒狀態和事後的結果。定期回顧，讓你清楚地看到情緒決策的代價，強化對系統的信任，削弱下一次情緒衝動的說服力。</div>
+            </div>
+          </div>
+          <div class="step-item">
+            <div class="step-num">06</div>
+            <div class="step-content">
+              <div class="step-title">找一個財務問責夥伴</div>
+              <div class="step-desc">找一個有相近財務目標的朋友，互相分享投資計劃，並約定在做任何重大投資決策前互相諮詢。社會問責效應（social accountability）能讓你在衝動時多一層煞車——沒有人想對朋友解釋「我因為恐慌賣在最低點」。</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="pull-quote">
+        <div class="pull-quote-text">「成功的投資，是在恐懼和貪婪最強烈的時候，仍然能夠執行你在清醒時設計的系統。做到這一點，你就已經打敗了大多數投資人。」</div>
+        <div class="pull-quote-source">— 個人投資紀律的核心原則</div>
+      </div>
+
+      <div class="takeaway">
+        <div class="takeaway-label">本單元核心結論</div>
+        <div class="takeaway-text">投資紀律不是意志力的考驗，而是系統設計的結果。把正確的行為設定為預設值，把錯誤的行為設計成需要克服阻礙才能執行——這樣的系統，比任何鋼鐵般的意志力都更可靠，也更長久。</div>
+      </div>
+
+      <div class="tools-row">
+        <span class="tool-tag primary">個人投資政策宣言（IPS）模板</span>
+        <span class="tool-tag">市場週期情緒對照卡</span>
+        <span class="tool-tag">投資錯誤日誌模板</span>
+        <span class="tool-tag">系統設計自我評估表</span>
+      </div>
+    </section>
+
+  </div>
+</div>
+
+<!-- CHAPTER FOOTER -->
+<div class="chapter-footer">
+  <div>
+    <div class="cf-title">模組五 完成</div>
+    <h3 class="cf-heading">你已理解投資最強大的敵人</h3>
+    <p class="cf-text">損失趨避、七大認知偏誤、複利的指數威力、系統設計的重要性——這四個課題構成了行為財務學的核心洞見。帶著這些認識進入投資工具的選擇，你做出的每一個決策都會更加清醒。</p>
+    <div class="cf-nav-links">
+      <a class="cf-link prev" href="chapter4.html">返回模組四</a>
+      <a class="cf-link" href="chapter6.html">前往模組六</a>
+    </div>
+  </div>
+  <div>
+    <div class="cf-title">下一模組</div>
+    <h3 class="cf-heading">模組六：投資工具全解析</h3>
+    <p class="cf-text">心理框架建立之後，進入具體工具的選擇。你將深度了解 ETF、債券、高股息商品的運作邏輯，學會比較費用率與追蹤誤差，掌握定期定額與單筆投入的時機選擇，以及如何用台灣可取得的工具組建你的第一個投資組合。</p>
+  </div>
+</div>
+
+<footer class="site-footer">
+  <div class="sf-logo">FINANCE<span>.</span>COURSE</div>
+  <div class="sf-copy">個人理財與資產配置基礎 · 模組五 / 共十模組</div>
+</footer>
+
+<script>
+  window.addEventListener('scroll', () => {
+    const el = document.documentElement;
+    const progress = el.scrollTop / (el.scrollHeight - el.clientHeight) * 100;
+    document.getElementById('progress-bar').style.width = progress + '%';
+  });
+
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+  }, { threshold: 0.07 });
+
+  document.querySelectorAll('.lesson').forEach(el => observer.observe(el));
+
+  const sideLinks = document.querySelectorAll('.lesson-nav a');
+  const topLinks  = document.querySelectorAll('.nav-links a[href^="#"]');
+
+  const sideObserver = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        const id = e.target.id;
+        sideLinks.forEach(a => a.classList.toggle('active', a.getAttribute('href') === '#' + id));
+        topLinks.forEach(a  => a.classList.toggle('active', a.getAttribute('href') === '#' + id));
+      }
+    });
+  }, { threshold: 0.45 });
+
+  document.querySelectorAll('.lesson').forEach(el => sideObserver.observe(el));
+</script>
+</body>
+</html>

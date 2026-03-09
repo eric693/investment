@@ -1,0 +1,1125 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>模組九：退休規劃與被動收入</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@300;400;500;600;700;900&family=IBM+Plex+Mono:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --cream:        #F5F0E8;
+      --cream-dark:   #EDE6D6;
+      --cream-mid:    #E4DBC8;
+      --cream-border: #D0C4AC;
+      --ink:          #1A1510;
+      --ink-light:    #3D3228;
+      --ink-muted:    #7A6E62;
+      --red:          #C0392B;
+      --red-wash:     #F0E0DD;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; font-size: 16px; }
+
+    body {
+      background: var(--cream);
+      color: var(--ink);
+      font-family: 'Noto Serif TC', Georgia, serif;
+      line-height: 1.8;
+      overflow-x: hidden;
+    }
+
+    body::after {
+      content: '';
+      position: fixed; inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+      pointer-events: none; z-index: 9000;
+    }
+
+    #progress-bar {
+      position: fixed; top: 0; left: 0;
+      height: 2px; background: var(--red);
+      z-index: 9999; transition: width 0.08s linear;
+    }
+
+    /* ── TOP NAV ── */
+    .top-nav {
+      position: sticky; top: 0; z-index: 500;
+      background: var(--cream-dark);
+      border-bottom: 1px solid var(--cream-border);
+      padding: 0 60px;
+      display: flex; align-items: center; justify-content: space-between;
+      height: 52px;
+    }
+    .nav-breadcrumb { font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.14em; color: var(--ink-muted); text-transform: uppercase; }
+    .nav-breadcrumb span { color: var(--red); }
+    .nav-links { display: flex; }
+    .nav-links a {
+      font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.12em;
+      text-transform: uppercase; color: var(--ink-muted); text-decoration: none;
+      padding: 0 20px; height: 52px; display: flex; align-items: center;
+      border-left: 1px solid var(--cream-border); transition: color 0.2s, background 0.2s;
+    }
+    .nav-links a:hover { color: var(--ink); background: var(--cream-mid); }
+    .nav-links a.active { color: var(--red); }
+
+    /* ── HERO ── */
+    .hero { padding: 100px 60px 80px; border-bottom: 2px solid var(--ink); position: relative; overflow: hidden; }
+    .hero-rule { position: absolute; top: 44px; left: 60px; right: 60px; height: 1px; background: var(--ink); }
+    .hero-meta { font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-muted); margin-bottom: 32px; display: flex; align-items: center; gap: 20px; }
+    .hero-meta .dot { width: 4px; height: 4px; background: var(--red); display: inline-block; }
+    .hero-meta .mod-label { color: var(--red); font-weight: 500; }
+    .hero-title { font-size: clamp(40px, 7vw, 88px); font-weight: 900; line-height: 1.0; letter-spacing: -0.025em; max-width: 900px; }
+    .hero-title .line2 { display: block; color: var(--red); }
+    .hero-deck { margin-top: 28px; max-width: 600px; font-size: 17px; font-weight: 300; color: var(--ink-light); line-height: 1.9; }
+    .hero-meta-bottom { margin-top: 48px; display: flex; gap: 40px; }
+    .meta-item { display: flex; flex-direction: column; gap: 4px; }
+    .meta-label { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--ink-muted); }
+    .meta-value { font-family: 'IBM Plex Mono', monospace; font-size: 18px; font-weight: 600; color: var(--ink); }
+    .hero-number { position: absolute; right: 60px; bottom: -20px; font-family: 'IBM Plex Mono', monospace; font-size: 220px; font-weight: 600; color: var(--cream-border); line-height: 1; user-select: none; pointer-events: none; letter-spacing: -0.05em; }
+
+    /* ── LAYOUT ── */
+    .page-body { display: grid; grid-template-columns: 220px 1fr; }
+
+    /* ── SIDEBAR ── */
+    .lesson-nav { border-right: 1px solid var(--cream-border); padding: 48px 28px; position: sticky; top: 52px; height: calc(100vh - 52px); overflow-y: auto; background: var(--cream-dark); }
+    .lesson-nav-title { font-family: 'IBM Plex Mono', monospace; font-size: 9px; letter-spacing: 0.25em; text-transform: uppercase; color: var(--ink-muted); margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px solid var(--cream-border); }
+    .lesson-nav a { display: block; padding: 10px 0; font-size: 13px; font-weight: 500; color: var(--ink-muted); text-decoration: none; transition: color 0.18s; line-height: 1.45; border-bottom: 1px solid var(--cream-border); }
+    .lesson-nav a:last-child { border-bottom: none; }
+    .lesson-nav a:hover { color: var(--ink); }
+    .lesson-nav a.active { color: var(--red); }
+    .lesson-nav .ln-num { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.1em; color: var(--cream-border); display: block; margin-bottom: 2px; transition: color 0.18s; }
+    .lesson-nav a.active .ln-num { color: var(--red); }
+    .lesson-nav a:hover .ln-num { color: var(--ink-muted); }
+
+    /* ── LESSON ── */
+    .lessons-content { padding: 0; }
+    .lesson { padding: 80px 80px 72px; border-bottom: 1px solid var(--cream-border); opacity: 0; transform: translateY(18px); transition: opacity 0.55s ease, transform 0.55s ease; }
+    .lesson.visible { opacity: 1; transform: translateY(0); }
+    .lesson:nth-child(even) { background: var(--cream-dark); }
+
+    .lesson-header { margin-bottom: 52px; padding-bottom: 36px; border-bottom: 1px solid var(--cream-border); }
+    .lesson-tag-row { display: flex; align-items: center; gap: 16px; margin-bottom: 16px; }
+    .lesson-num-tag { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--red); font-weight: 500; }
+    .lesson-duration { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.15em; color: var(--ink-muted); }
+    .lesson-title { font-size: clamp(22px, 3vw, 34px); font-weight: 700; line-height: 1.25; letter-spacing: -0.01em; margin-bottom: 12px; }
+    .lesson-subtitle { font-size: 15px; font-weight: 300; color: var(--ink-muted); line-height: 1.7; max-width: 560px; }
+
+    /* ── SHARED ── */
+    .content-block { margin-bottom: 48px; }
+    .block-label { font-family: 'IBM Plex Mono', monospace; font-size: 9px; letter-spacing: 0.28em; text-transform: uppercase; color: var(--ink-muted); margin-bottom: 16px; padding-bottom: 8px; border-bottom: 1px solid var(--cream-border); }
+    .body-text { font-size: 15.5px; line-height: 2.0; color: var(--ink-light); }
+    .body-text + .body-text { margin-top: 20px; }
+    .body-text strong { color: var(--ink); font-weight: 600; }
+
+    .pull-quote { margin: 40px 0; padding: 28px 0 28px 36px; border-left: 3px solid var(--red); }
+    .pull-quote-text { font-size: 19px; font-weight: 500; line-height: 1.7; color: var(--ink); font-style: italic; }
+    .pull-quote-source { margin-top: 12px; font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.1em; color: var(--red); }
+
+    .data-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--cream-border); border: 1px solid var(--cream-border); margin: 36px 0; }
+    .data-cell { background: var(--cream); padding: 28px; transition: background 0.2s; }
+    .lesson:nth-child(even) .data-cell { background: var(--cream-dark); }
+    .data-cell:hover { background: var(--red-wash); }
+    .data-num { font-family: 'IBM Plex Mono', monospace; font-size: 36px; font-weight: 600; color: var(--red); line-height: 1; margin-bottom: 8px; }
+    .data-label { font-size: 13px; color: var(--ink-muted); line-height: 1.5; }
+
+    .concept-list { margin: 28px 0; border: 1px solid var(--cream-border); }
+    .concept-item { display: grid; grid-template-columns: 200px 1fr; border-bottom: 1px solid var(--cream-border); }
+    .concept-item:last-child { border-bottom: none; }
+    .concept-term { padding: 20px 24px; font-weight: 600; font-size: 14px; line-height: 1.5; border-right: 1px solid var(--cream-border); background: var(--cream-mid); }
+    .concept-def { padding: 20px 28px; font-size: 14px; color: var(--ink-muted); line-height: 1.7; }
+
+    .steps { margin: 28px 0; }
+    .step-item { display: grid; grid-template-columns: 52px 1fr; border-bottom: 1px solid var(--cream-border); }
+    .step-item:first-child { border-top: 1px solid var(--cream-border); }
+    .step-num { font-family: 'IBM Plex Mono', monospace; font-size: 11px; font-weight: 600; color: var(--cream); background: var(--ink); display: flex; align-items: center; justify-content: center; padding: 20px 0; }
+    .step-content { padding: 20px 28px; }
+    .step-title { font-size: 15px; font-weight: 600; margin-bottom: 6px; }
+    .step-desc { font-size: 13.5px; color: var(--ink-muted); line-height: 1.7; }
+
+    .highlight-box { background: var(--ink); color: var(--cream); padding: 36px 40px; margin: 36px 0; }
+    .highlight-box .hl-label { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--red); margin-bottom: 14px; }
+    .highlight-box .hl-text { font-size: 15px; line-height: 1.9; color: rgba(245,240,232,0.82); }
+    .highlight-box .hl-text strong { color: var(--cream); }
+
+    .formula-block { font-family: 'IBM Plex Mono', monospace; background: var(--cream-mid); border: 1px solid var(--cream-border); padding: 28px 32px; margin: 28px 0; font-size: 14px; line-height: 2.2; color: var(--ink); }
+    .formula-block .f-comment { color: var(--ink-muted); font-size: 12px; }
+    .formula-block .f-highlight { color: var(--red); font-weight: 600; }
+    .formula-block .f-good { color: var(--ink); font-weight: 600; }
+
+    .takeaway { margin-top: 48px; padding-top: 32px; border-top: 2px solid var(--ink); }
+    .takeaway-label { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.25em; text-transform: uppercase; color: var(--red); margin-bottom: 14px; }
+    .takeaway-text { font-size: 17px; font-weight: 500; font-style: italic; color: var(--ink); line-height: 1.75; }
+
+    .tools-row { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 40px; padding-top: 28px; border-top: 1px solid var(--cream-border); }
+    .tool-tag { font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.06em; padding: 6px 16px; border: 1px solid var(--cream-border); color: var(--ink-muted); }
+    .tool-tag.primary { border-color: var(--red); color: var(--red); background: var(--red-wash); }
+
+    /* ── 4% RULE SCENARIOS ── */
+    .rule-scenarios {
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      gap: 1px; background: var(--cream-border); border: 1px solid var(--cream-border); margin: 28px 0;
+    }
+    .rule-card { background: var(--cream); padding: 26px 22px; }
+    .lesson:nth-child(even) .rule-card { background: var(--cream-dark); }
+    .rule-card:hover { background: var(--red-wash); transition: background 0.2s; }
+    .rule-label { font-family: 'IBM Plex Mono', monospace; font-size: 9px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--ink-muted); margin-bottom: 10px; }
+    .rule-pct { font-family: 'IBM Plex Mono', monospace; font-size: 40px; font-weight: 700; color: var(--red); line-height: 1; margin-bottom: 4px; }
+    .rule-name { font-size: 15px; font-weight: 700; color: var(--ink); margin-bottom: 10px; }
+    .rule-divider { height: 1px; background: var(--cream-border); margin-bottom: 12px; }
+    .rule-row { display: flex; justify-content: space-between; align-items: baseline; padding: 6px 0; border-bottom: 1px solid var(--cream-border); }
+    .rule-row:last-child { border-bottom: none; }
+    .rule-row-label { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.1em; color: var(--ink-muted); }
+    .rule-row-val { font-family: 'IBM Plex Mono', monospace; font-size: 13px; font-weight: 600; color: var(--ink); }
+    .rule-row-val.accent { color: var(--red); }
+
+    /* ── RETIREMENT NEEDS TABLE ── */
+    .needs-table { margin: 28px 0; border: 1px solid var(--cream-border); width: 100%; }
+    .needs-table thead tr { background: var(--ink); }
+    .needs-table th { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; padding: 13px 16px; text-align: left; color: rgba(245,240,232,0.7); font-weight: 500; border-right: 1px solid rgba(255,255,255,0.08); white-space: nowrap; }
+    .needs-table th:last-child { border-right: none; }
+    .needs-table td { font-size: 13.5px; padding: 14px 16px; border-right: 1px solid var(--cream-border); border-bottom: 1px solid var(--cream-border); color: var(--ink-light); vertical-align: middle; line-height: 1.6; }
+    .needs-table td:last-child { border-right: none; }
+    .needs-table tr:last-child td { border-bottom: none; }
+    .needs-table tr:nth-child(even) td { background: var(--cream-dark); }
+    .needs-table .td-scenario { font-weight: 700; color: var(--ink); }
+    .needs-table .td-mono { font-family: 'IBM Plex Mono', monospace; }
+    .needs-table .td-target { font-family: 'IBM Plex Mono', monospace; font-size: 17px; font-weight: 700; color: var(--red); }
+    .needs-table .td-note { font-size: 12px; color: var(--ink-muted); }
+
+    /* ── LABOUR INSURANCE TABLE ── */
+    .labour-grid {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 1px; background: var(--cream-border); border: 1px solid var(--cream-border); margin: 28px 0;
+    }
+    .labour-col { background: var(--cream); }
+    .lesson:nth-child(even) .labour-col { background: var(--cream-dark); }
+    .labour-head { padding: 18px 24px; border-bottom: 1px solid var(--cream-border); background: var(--cream-mid); }
+    .labour-title { font-size: 15px; font-weight: 700; margin-bottom: 3px; }
+    .labour-sub { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.13em; text-transform: uppercase; color: var(--red); }
+    .labour-rows { display: flex; flex-direction: column; }
+    .labour-row { display: grid; grid-template-columns: 110px 1fr; border-bottom: 1px solid var(--cream-border); }
+    .labour-row:last-child { border-bottom: none; }
+    .labour-row-label { font-family: 'IBM Plex Mono', monospace; font-size: 9.5px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-muted); padding: 13px 10px 13px 20px; border-right: 1px solid var(--cream-border); line-height: 1.5; }
+    .labour-row-val { padding: 13px 20px; font-size: 13px; color: var(--ink-light); line-height: 1.6; }
+    .labour-row-val strong { color: var(--ink); font-weight: 600; }
+    .labour-row-val .accent { font-family: 'IBM Plex Mono', monospace; color: var(--red); font-weight: 600; font-size: 16px; }
+    .labour-row-val .warn { color: var(--red); font-size: 12.5px; }
+
+    /* ── PASSIVE INCOME MATRIX ── */
+    .passive-matrix { margin: 28px 0; border: 1px solid var(--cream-border); width: 100%; }
+    .passive-matrix thead tr { background: var(--ink); }
+    .passive-matrix th { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; padding: 13px 16px; text-align: left; color: rgba(245,240,232,0.7); font-weight: 500; border-right: 1px solid rgba(255,255,255,0.08); white-space: nowrap; }
+    .passive-matrix th:last-child { border-right: none; }
+    .passive-matrix td { font-size: 13px; padding: 14px 16px; border-right: 1px solid var(--cream-border); border-bottom: 1px solid var(--cream-border); color: var(--ink-light); vertical-align: top; line-height: 1.65; }
+    .passive-matrix td:last-child { border-right: none; }
+    .passive-matrix tr:last-child td { border-bottom: none; }
+    .passive-matrix tr:nth-child(even) td { background: var(--cream-dark); }
+    .passive-matrix .td-source { font-weight: 700; color: var(--ink); font-size: 14px; }
+    .passive-matrix .td-en { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--red); display: block; margin-top: 2px; text-transform: uppercase; }
+    .passive-matrix .td-mono { font-family: 'IBM Plex Mono', monospace; }
+    .passive-matrix .td-good { color: var(--ink); font-weight: 500; }
+    .passive-matrix .td-warn { color: var(--red); font-size: 12px; }
+    .passive-matrix .td-effort { display: inline-block; font-family: 'IBM Plex Mono', monospace; font-size: 11px; padding: 2px 10px; border: 1px solid var(--cream-border); color: var(--ink-muted); }
+    .passive-matrix .td-effort.low { border-color: var(--ink-muted); color: var(--ink-muted); }
+    .passive-matrix .td-effort.high { border-color: var(--red); color: var(--red); }
+
+    /* ── WITHDRAWAL STRATEGY ── */
+    .withdrawal-block { margin: 36px 0; border: 1px solid var(--cream-border); }
+    .wb-header { background: var(--ink); padding: 16px 28px; display: flex; justify-content: space-between; align-items: center; }
+    .wb-title { font-size: 15px; font-weight: 700; color: var(--cream); }
+    .wb-sub { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--red); }
+    .wb-buckets { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--cream-border); }
+    .wb-bucket { background: var(--cream); padding: 22px 22px 20px; }
+    .lesson:nth-child(even) .wb-bucket { background: var(--cream-dark); }
+    .wb-bucket-num { font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--ink-muted); margin-bottom: 8px; }
+    .wb-bucket-name { font-size: 16px; font-weight: 700; color: var(--ink); margin-bottom: 4px; }
+    .wb-bucket-range { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--red); margin-bottom: 12px; }
+    .wb-alloc-rows { display: flex; flex-direction: column; gap: 0; }
+    .wb-alloc-row { display: grid; grid-template-columns: 80px 1fr; border-top: 1px solid var(--cream-border); }
+    .wb-alloc-label { font-family: 'IBM Plex Mono', monospace; font-size: 9.5px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-muted); padding: 9px 6px 9px 0; border-right: 1px solid var(--cream-border); line-height: 1.4; }
+    .wb-alloc-val { padding: 9px 0 9px 10px; font-size: 12.5px; color: var(--ink-light); line-height: 1.5; }
+    .wb-alloc-val strong { color: var(--ink); }
+    .wb-note { padding: 16px 28px; background: var(--cream-mid); border-top: 1px solid var(--cream-border); font-size: 13px; color: var(--ink-muted); line-height: 1.7; }
+
+    /* ── LONGEVITY RISK TABLE ── */
+    .longevity-table { margin: 28px 0; border: 1px solid var(--cream-border); width: 100%; }
+    .longevity-table thead tr { background: var(--ink); }
+    .longevity-table th { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; padding: 13px 16px; text-align: left; color: rgba(245,240,232,0.7); font-weight: 500; border-right: 1px solid rgba(255,255,255,0.08); }
+    .longevity-table th:last-child { border-right: none; }
+    .longevity-table td { font-size: 13.5px; padding: 14px 16px; border-right: 1px solid var(--cream-border); border-bottom: 1px solid var(--cream-border); color: var(--ink-light); vertical-align: middle; line-height: 1.6; }
+    .longevity-table td:last-child { border-right: none; }
+    .longevity-table tr:last-child td { border-bottom: none; }
+    .longevity-table tr:nth-child(even) td { background: var(--cream-dark); }
+    .longevity-table .td-age { font-family: 'IBM Plex Mono', monospace; font-weight: 700; color: var(--ink); }
+    .longevity-table .td-mono { font-family: 'IBM Plex Mono', monospace; }
+    .longevity-table .td-risk { color: var(--red); font-weight: 600; font-size: 12.5px; }
+    .longevity-table .td-ok { color: var(--ink-muted); font-size: 12.5px; }
+
+    /* ── CHAPTER FOOTER ── */
+    .chapter-footer { background: var(--ink); color: var(--cream); padding: 72px 80px; display: grid; grid-template-columns: 1fr 1fr; gap: 80px; }
+    .cf-title { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--red); margin-bottom: 16px; }
+    .cf-heading { font-size: 22px; font-weight: 700; line-height: 1.3; margin-bottom: 16px; }
+    .cf-text { font-size: 14px; color: rgba(245,240,232,0.6); line-height: 1.85; }
+    .cf-nav-links { display: flex; gap: 32px; margin-top: 24px; }
+    .cf-link { font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--cream); text-decoration: none; border-bottom: 1px solid var(--red); padding-bottom: 2px; transition: color 0.2s; }
+    .cf-link:hover { color: var(--red); }
+    .cf-link.prev { border-color: rgba(245,240,232,0.3); }
+    .cf-link.prev:hover { border-color: var(--red); color: var(--red); }
+
+    /* ── SITE FOOTER ── */
+    .site-footer { padding: 24px 60px; border-top: 1px solid var(--cream-border); display: flex; justify-content: space-between; align-items: center; background: var(--cream-dark); }
+    .sf-logo { font-family: 'IBM Plex Mono', monospace; font-size: 12px; font-weight: 600; letter-spacing: 0.1em; }
+    .sf-logo span { color: var(--red); }
+    .sf-copy { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--ink-muted); }
+
+    .lesson-nav::-webkit-scrollbar { width: 3px; }
+    .lesson-nav::-webkit-scrollbar-thumb { background: var(--cream-border); }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 1100px) {
+      .rule-scenarios { grid-template-columns: 1fr 1fr; }
+      .wb-buckets { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 1024px) {
+      .page-body { grid-template-columns: 1fr; }
+      .lesson-nav { display: none; }
+      .lesson { padding: 56px 40px; }
+      .hero { padding: 72px 40px 60px; }
+      .hero-rule { left: 40px; right: 40px; }
+      .chapter-footer { padding: 56px 40px; gap: 48px; }
+      .site-footer { padding: 20px 40px; }
+      .top-nav { padding: 0 40px; }
+      .labour-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 640px) {
+      .hero { padding: 56px 24px 48px; }
+      .hero-rule { left: 24px; right: 24px; }
+      .hero-number { display: none; }
+      .hero-meta { flex-wrap: wrap; }
+      .lesson { padding: 40px 24px; }
+      .data-row { grid-template-columns: 1fr; }
+      .concept-item { grid-template-columns: 1fr; }
+      .concept-term { border-right: none; border-bottom: 1px solid var(--cream-border); }
+      .rule-scenarios { grid-template-columns: 1fr; }
+      .chapter-footer { grid-template-columns: 1fr; gap: 40px; padding: 40px 24px; }
+      .site-footer { padding: 20px 24px; flex-direction: column; gap: 8px; text-align: center; }
+      .top-nav { padding: 0 20px; }
+      .nav-links { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<div id="progress-bar"></div>
+
+<nav class="top-nav">
+  <div class="nav-breadcrumb">個人理財課程 / <span>模組九</span></div>
+  <div class="nav-links">
+    <a href="index.html">課程目錄</a>
+    <a href="chapter8.html">模組八</a>
+    <a href="#lesson-1" class="active">單元 01</a>
+    <a href="#lesson-2">單元 02</a>
+    <a href="#lesson-3">單元 03</a>
+    <a href="#lesson-4">單元 04</a>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="hero-rule"></div>
+  <div class="hero-meta">
+    <span class="mod-label">Module 09</span>
+    <span class="dot"></span>
+    <span>Retirement</span>
+    <span class="dot"></span>
+    <span>退休規劃</span>
+  </div>
+  <h1 class="hero-title">
+    退休規劃
+    <span class="line2">與被動收入</span>
+  </h1>
+  <p class="hero-deck">退休不是終點，而是一種財務狀態的轉換——從依靠勞動收入，轉為依靠資產產生的現金流維持生活。這個模組帶你從計算真正需要多少退休金，到設計一個在你停止工作後仍能持續運轉的財務引擎，涵蓋台灣勞退、勞保的領取策略，以及如何建立多元被動收入體系。</p>
+  <div class="hero-meta-bottom">
+    <div class="meta-item">
+      <span class="meta-label">單元數</span>
+      <span class="meta-value">04</span>
+    </div>
+    <div class="meta-item">
+      <span class="meta-label">學習時間</span>
+      <span class="meta-value">92 min</span>
+    </div>
+    <div class="meta-item">
+      <span class="meta-label">難度</span>
+      <span class="meta-value">中高級</span>
+    </div>
+    <div class="meta-item">
+      <span class="meta-label">附件</span>
+      <span class="meta-value">4 份</span>
+    </div>
+  </div>
+  <div class="hero-number">09</div>
+</header>
+
+<div class="page-body">
+
+  <aside class="lesson-nav">
+    <div class="lesson-nav-title">本章單元</div>
+    <a href="#lesson-1" class="active">
+      <span class="ln-num">09—01</span>
+      4% 法則：退休金計算的起點與侷限
+    </a>
+    <a href="#lesson-2">
+      <span class="ln-num">09—02</span>
+      台灣勞退 + 勞保的最優領取策略
+    </a>
+    <a href="#lesson-3">
+      <span class="ln-num">09—03</span>
+      退休提領策略與長壽風險管理
+    </a>
+    <a href="#lesson-4">
+      <span class="ln-num">09—04</span>
+      建立多元被動收入體系
+    </a>
+  </aside>
+
+  <div class="lessons-content">
+
+    <!-- ════════════════════════════════ LESSON 1 ════════════════════════════════ -->
+    <section class="lesson" id="lesson-1">
+      <div class="lesson-header">
+        <div class="lesson-tag-row">
+          <span class="lesson-num-tag">Lesson 09—01</span>
+          <span class="lesson-duration">約 24 分鐘</span>
+        </div>
+        <h2 class="lesson-title">4% 法則<br/>退休金計算的起點與侷限</h2>
+        <p class="lesson-subtitle">「我需要多少錢才能退休？」這個問題有一個在學術研究上具有高度支持度的起點答案，它叫做 4% 法則。了解它的由來、數學基礎，以及它在台灣情境下的適用限制，是退休財務規劃最重要的第一步。</p>
+      </div>
+
+      <div class="content-block">
+        <div class="block-label">4% 法則的起源：三一大學研究</div>
+        <p class="body-text">1994 年，美國財務規劃師 William Bengen 在《Journal of Financial Planning》發表了一篇研究，分析在所有歷史市場情境下，退休人員能夠安全提領多少比例而不會在 30 年內耗盡資產。他的結論是：<strong>持有 50–75% 股票和 25–50% 債券的組合，歷史上可支持每年提領相當於期初資產 4% 的金額（並每年隨通膨調升），在 30 年提領期內從未耗盡資產。</strong></p>
+        <p class="body-text">4% 是最低安全提領率，不是平均提領率。在大多數歷史情境中，30 年後資產不僅沒有耗盡，甚至比起始值更高。這個法則後來被「三一大學研究」（Trinity Study）在 1998 年用更長的歷史數據進一步確認，成為退休規劃的黃金參考標準。</p>
+      </div>
+
+      <div class="formula-block">
+        <span class="f-comment">// 4% 法則的核心計算公式</span><br/><br/>
+        退休所需資產 = 年度退休支出 ÷ 提領率<br/><br/>
+        <span class="f-comment">// 以 4% 提領率為基準</span><br/>
+        年支出 <span class="f-good">60 萬元</span>　→　需累積 60 ÷ 4% = <span class="f-highlight">1,500 萬元</span><br/>
+        年支出 <span class="f-good">80 萬元</span>　→　需累積 80 ÷ 4% = <span class="f-highlight">2,000 萬元</span><br/>
+        年支出 <span class="f-good">100 萬元</span>　→　需累積 100 ÷ 4% = <span class="f-highlight">2,500 萬元</span><br/>
+        年支出 <span class="f-good">120 萬元</span>　→　需累積 120 ÷ 4% = <span class="f-highlight">3,000 萬元</span><br/><br/>
+        <span class="f-comment">// 反向計算：已知目標退休資產，推算年度可提領金額</span><br/>
+        資產 <span class="f-good">1,000 萬</span> × 4% = 年提領 <span class="f-highlight">40 萬元</span>（月均 3.33 萬）<br/>
+        資產 <span class="f-good">2,000 萬</span> × 4% = 年提領 <span class="f-highlight">80 萬元</span>（月均 6.67 萬）
+      </div>
+
+      <div class="content-block">
+        <div class="block-label">三種提領率的生存率比較</div>
+        <p class="body-text">提領率越低，資產維持的機率越高，但需要積累的退休資產也越多。以下三種提領率，代表不同的風險承受度和退休品質選擇。</p>
+      </div>
+
+      <div class="rule-scenarios">
+        <div class="rule-card">
+          <div class="rule-label">保守型</div>
+          <div class="rule-pct">3%</div>
+          <div class="rule-name">超安全提領率</div>
+          <div class="rule-divider"></div>
+          <div class="rule-row">
+            <span class="rule-row-label">30 年存活率</span>
+            <span class="rule-row-val">98%+</span>
+          </div>
+          <div class="rule-row">
+            <span class="rule-row-label">40 年存活率</span>
+            <span class="rule-row-val">95%+</span>
+          </div>
+          <div class="rule-row">
+            <span class="rule-row-label">倍數（年支出）</span>
+            <span class="rule-row-val accent">33x</span>
+          </div>
+          <div class="rule-row">
+            <span class="rule-row-label">年支出 60 萬</span>
+            <span class="rule-row-val accent">需 2,000 萬</span>
+          </div>
+          <div class="rule-row">
+            <span class="rule-row-label">適合情境</span>
+            <span class="rule-row-val" style="font-size:12px;">早退休（40–50 歲）、極度厭惡風險、計劃留遺產</span>
+          </div>
+        </div>
+        <div class="rule-card">
+          <div class="rule-label">標準型</div>
+          <div class="rule-pct">4%</div>
+          <div class="rule-name">傳統安全提領率</div>
+          <div class="rule-divider"></div>
+          <div class="rule-row">
+            <span class="rule-row-label">30 年存活率</span>
+            <span class="rule-row-val">96%</span>
+          </div>
+          <div class="rule-row">
+            <span class="rule-row-label">40 年存活率</span>
+            <span class="rule-row-val">87%</span>
+          </div>
+          <div class="rule-row">
+            <span class="rule-row-label">倍數（年支出）</span>
+            <span class="rule-row-val accent">25x</span>
+          </div>
+          <div class="rule-row">
+            <span class="rule-row-label">年支出 60 萬</span>
+            <span class="rule-row-val accent">需 1,500 萬</span>
+          </div>
+          <div class="rule-row">
+            <span class="rule-row-label">適合情境</span>
+            <span class="rule-row-val" style="font-size:12px;">65 歲前後正常退休、標準 30 年退休期規劃</span>
+          </div>
+        </div>
+        <div class="rule-card">
+          <div class="rule-label">積極型</div>
+          <div class="rule-pct">5%</div>
+          <div class="rule-name">較高提領率</div>
+          <div class="rule-divider"></div>
+          <div class="rule-row">
+            <span class="rule-row-label">30 年存活率</span>
+            <span class="rule-row-val">82%</span>
+          </div>
+          <div class="rule-row">
+            <span class="rule-row-label">40 年存活率</span>
+            <span class="rule-row-val">65%</span>
+          </div>
+          <div class="rule-row">
+            <span class="rule-row-label">倍數（年支出）</span>
+            <span class="rule-row-val accent">20x</span>
+          </div>
+          <div class="rule-row">
+            <span class="rule-row-label">年支出 60 萬</span>
+            <span class="rule-row-val accent">需 1,200 萬</span>
+          </div>
+          <div class="rule-row">
+            <span class="rule-row-label">適合情境</span>
+            <span class="rule-row-val" style="font-size:12px;">有彈性支出能力、有其他收入補充、退休後仍計劃兼職</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="content-block">
+        <div class="block-label">4% 法則在台灣的適用性修正</div>
+        <p class="body-text">4% 法則基於美國 1926–1992 年的歷史市場數據。台灣投資人在使用時，需要考慮幾個重要的修正因素。</p>
+      </div>
+
+      <div class="concept-list">
+        <div class="concept-item">
+          <div class="concept-term">壽命延長<br/>需更保守</div>
+          <div class="concept-def">原始研究假設 30 年退休期。台灣 2024 年男性平均壽命約 77 歲、女性約 83 歲，但平均值不代表你的預期壽命——若 65 歲退休，有相當比例的人會活到 90 歲以上，意味著 25–30 年的退休期。台灣女性尤其應考慮 3–3.5% 的更保守提領率，對應 40 年退休期。</div>
+        </div>
+        <div class="concept-item">
+          <div class="concept-term">台灣股市歷史<br/>數據不同</div>
+          <div class="concept-def">4% 法則基於美國股市歷史報酬。台灣加權指數的長期實質報酬與波動特性和美國不同，且高度集中於科技半導體產業。若以台灣 ETF 為主要退休資產，應考慮使用更保守的 3–3.5% 提領率，或建立更多元的全球資產配置。</div>
+        </div>
+        <div class="concept-item">
+          <div class="concept-term">勞退 + 勞保<br/>可降低提領壓力</div>
+          <div class="concept-def">台灣的勞工退休金（勞退新制）和勞工保險老年給付（勞保年金），是退休收入的重要補充。若這兩項合計每月提供 2–3 萬元的穩定收入，等同於自行持有約 600–900 萬元的「退休資產」，可以顯著降低你需要從投資組合提領的金額，讓 4% 法則更加安全。</div>
+        </div>
+        <div class="concept-item">
+          <div class="concept-term">彈性支出<br/>大幅提升安全性</div>
+          <div class="concept-def">固定每年提領 4% 加通膨調整，是最嚴格的壓力測試。若你願意在市場大跌時降低支出 10–20%（暫緩旅遊計劃、推遲大額消費），研究顯示可將安全提領率提高至 4.5–5%，因為避免了在最壞時機的強制賣出。彈性支出能力是比提領率本身更重要的退休安全指標。</div>
+        </div>
+      </div>
+
+      <div class="content-block">
+        <div class="block-label">台灣不同生活水準的退休目標資金試算</div>
+      </div>
+
+      <table class="needs-table">
+        <thead>
+          <tr>
+            <th>退休生活方式</th>
+            <th>月支出估計</th>
+            <th>年支出</th>
+            <th>目標（3% 提領）</th>
+            <th>目標（4% 提領）</th>
+            <th>說明</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="td-scenario">簡樸型<br/><span class="td-note">雙北以外城市，自住房，無大額旅遊</span></td>
+            <td class="td-mono">3–4 萬元</td>
+            <td class="td-mono">36–48 萬元</td>
+            <td class="td-target">1,200–1,600 萬</td>
+            <td class="td-mono" style="color:var(--ink-muted);">900–1,200 萬</td>
+            <td class="td-note">可搭配勞保年金每月約 1.5 萬，降低投資組合提領壓力</td>
+          </tr>
+          <tr>
+            <td class="td-scenario">舒適型<br/><span class="td-note">台灣主要城市，偶爾國內旅遊，基本醫療預備</span></td>
+            <td class="td-mono">5–6 萬元</td>
+            <td class="td-mono">60–72 萬元</td>
+            <td class="td-target">2,000–2,400 萬</td>
+            <td class="td-mono" style="color:var(--ink-muted);">1,500–1,800 萬</td>
+            <td class="td-note">台灣一般受薪階層退休目標的中間參考值</td>
+          </tr>
+          <tr>
+            <td class="td-scenario">富裕型<br/><span class="td-note">雙北，每年出國，優質醫療，偶爾奢侈消費</span></td>
+            <td class="td-mono">8–10 萬元</td>
+            <td class="td-mono">96–120 萬元</td>
+            <td class="td-target">3,200–4,000 萬</td>
+            <td class="td-mono" style="color:var(--ink-muted);">2,400–3,000 萬</td>
+            <td class="td-note">需要積極的長期投資策略和早期規劃，一般工作年限難以自然達成</td>
+          </tr>
+          <tr>
+            <td class="td-scenario">財務自由型<br/><span class="td-note">任何城市，不受財務限制的生活方式</span></td>
+            <td class="td-mono">12 萬元以上</td>
+            <td class="td-mono">144 萬以上</td>
+            <td class="td-target">4,800 萬以上</td>
+            <td class="td-mono" style="color:var(--ink-muted);">3,600 萬以上</td>
+            <td class="td-note">模組十「財務自由藍圖」將深入討論此目標的達成路徑</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="takeaway">
+        <div class="takeaway-label">本單元核心結論</div>
+        <div class="takeaway-text">4% 法則提供了退休目標計算的清晰起點：年支出 ÷ 0.04 = 目標退休資產。對台灣投資人，建議使用 3–3.5% 的提列率作為更保守的參考（對應更長壽命和非美國資產），並將勞退、勞保收入計入退休收入規劃，合理降低對投資組合提領的依賴。</div>
+      </div>
+
+      <div class="tools-row">
+        <span class="tool-tag primary">退休所需資金個人化計算器</span>
+        <span class="tool-tag">三種提領率 40 年模擬試算表</span>
+      </div>
+    </section>
+
+    <!-- ════════════════════════════════ LESSON 2 ════════════════════════════════ -->
+    <section class="lesson" id="lesson-2">
+      <div class="lesson-header">
+        <div class="lesson-tag-row">
+          <span class="lesson-num-tag">Lesson 09—02</span>
+          <span class="lesson-duration">約 22 分鐘</span>
+        </div>
+        <h2 class="lesson-title">台灣勞退 + 勞保<br/>最優領取策略</h2>
+        <p class="lesson-subtitle">台灣的勞工退休金（勞退新制）和勞工保險老年給付（勞保）是多數台灣受薪階層最大的強制退休儲蓄。理解它們的計算邏輯、選擇正確的領取方式，可能讓你的退休收入差異達到數百萬元。</p>
+      </div>
+
+      <div class="content-block">
+        <div class="block-label">勞退新制與勞保：兩個獨立制度的本質差異</div>
+        <p class="body-text">很多人把勞退和勞保混為一談，但它們是兩個完全獨立的制度，運作邏輯截然不同。<strong>勞退是「個人帳戶制」</strong>——你的提撥進你的個人帳戶，由政府代為投資，退休時領回本人帳戶內的資金加上投資收益；<strong>勞保是「社會保險制」</strong>——你繳的保費進入共同保險基金，退休時依據你的投保年資和薪資計算年金，而非領回自己繳的錢。</p>
+      </div>
+
+      <div class="labour-grid">
+        <div class="labour-col">
+          <div class="labour-head">
+            <div class="labour-title">勞工退休金（勞退新制）</div>
+            <div class="labour-sub">個人帳戶制 · 2005 年起適用</div>
+          </div>
+          <div class="labour-rows">
+            <div class="labour-row">
+              <div class="labour-row-label">提撥來源</div>
+              <div class="labour-row-val">雇主強制提撥 <strong>6%</strong> 薪資；勞工可自提 <strong>0–6%</strong>（自提部分免計入當年度所得）</div>
+            </div>
+            <div class="labour-row">
+              <div class="labour-row-label">帳戶歸屬</div>
+              <div class="labour-row-val">個人專屬帳戶，<strong>換工作不會消失</strong>，累積至退休</div>
+            </div>
+            <div class="labour-row">
+              <div class="labour-row-label">投資收益</div>
+              <div class="labour-row-val">由勞動部基金運用局代為投資，<strong>保障最低收益率</strong>（不低於兩年期定存利率），實際收益依基金績效</div>
+            </div>
+            <div class="labour-row">
+              <div class="labour-row-label">領取條件</div>
+              <div class="labour-row-val">年滿 <strong>60 歲</strong>，且勞保年資滿 15 年可申請月領；年資不足 15 年則一次領</div>
+            </div>
+            <div class="labour-row">
+              <div class="labour-row-label">月領 vs 一次領</div>
+              <div class="labour-row-val">月領：帳戶金額 ÷ 預期餘命月數；<span class="warn">活得越長、月領越划算</span>；一次領則拿回全部本利</div>
+            </div>
+            <div class="labour-row">
+              <div class="labour-row-label">估算範例</div>
+              <div class="labour-row-val">月薪 5 萬 × 雇主 6% × 30 年工作 + 合理投資收益 ≈ 帳戶累積 <span class="accent">約 220–280 萬元</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="labour-col">
+          <div class="labour-head">
+            <div class="labour-title">勞工保險老年給付（勞保）</div>
+            <div class="labour-sub">社會保險制 · 共同基金</div>
+          </div>
+          <div class="labour-rows">
+            <div class="labour-row">
+              <div class="labour-row-label">保費來源</div>
+              <div class="labour-row-val">勞工負擔 <strong>20%</strong>；雇主負擔 <strong>70%</strong>；政府補助 <strong>10%</strong>（合計按月投保薪資 × 費率）</div>
+            </div>
+            <div class="labour-row">
+              <div class="labour-row-label">年金計算</div>
+              <div class="labour-row-val">月投保薪資 × 年資 × <strong>1.55%</strong>（或選較高的計算方式）。例：月薪 4.5 萬 × 30 年 × 1.55% = <span class="accent">月領約 2.1 萬元</span></div>
+            </div>
+            <div class="labour-row">
+              <div class="labour-row-label">請領年齡</div>
+              <div class="labour-row-val">依出生年份漸進延後至 <strong>65 歲</strong>（1962 年後出生者）；60 歲可提前請領但打折減額</div>
+            </div>
+            <div class="labour-row">
+              <div class="labour-row-label">延後請領加成</div>
+              <div class="labour-row-val">每延後 1 年請領，年金增加 <strong>4%</strong>（最多延後 5 年，增加 20%）。65 歲不領、等到 70 歲，每月多拿 20%</div>
+            </div>
+            <div class="labour-row">
+              <div class="labour-row-label">月領 vs 一次領</div>
+              <div class="labour-row-val">活超過損益平衡點（約 <strong>15–17 年</strong>）月領更划算；預期壽命短者考慮一次領。大多數人應選月領。</div>
+            </div>
+            <div class="labour-row">
+              <div class="labour-row-label">財務風險</div>
+              <div class="labour-row-val"><span class="warn">勞保基金財務已現缺口警訊，未來給付是否縮減存在不確定性</span>，應將此作為補充收入而非主要依賴</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="content-block">
+        <div class="block-label">勞保年金「延後請領」的精確試算</div>
+        <p class="body-text">勞保年金延後請領的加成機制，對預期壽命較長的人是非常有利的數學選擇。以下試算說明不同請領年齡的長期累積差異。</p>
+      </div>
+
+      <div class="formula-block">
+        <span class="f-comment">// 假設：月投保薪資 45,800 元，年資 30 年，年金基本計算</span><br/>
+        基本月領額 = 45,800 × 30 × 1.55% ≈ <span class="f-good">21,297 元 / 月</span><br/><br/>
+        <span class="f-comment">// 不同請領年齡的月領金額比較</span><br/>
+        60 歲請領（減額 24%）　→　月領約 <span class="f-highlight">16,186 元</span><br/>
+        65 歲請領（標準金額）　→　月領約 <span class="f-good">21,297 元</span><br/>
+        70 歲請領（加成 20%）　→　月領約 <span class="f-good">25,556 元</span><br/><br/>
+        <span class="f-comment">// 65 歲 vs. 70 歲的損益平衡計算</span><br/>
+        65 歲等 5 年放棄：21,297 × 60 個月 = <span class="f-highlight">放棄 127.8 萬元</span><br/>
+        70 歲起每月多領：25,556 − 21,297 = 4,259 元<br/>
+        損益平衡年數 = 127.8 萬 ÷ 4,259 元 ÷ 12 = <span class="f-good">約 25 年</span><br/>
+        損益平衡年齡 = 70 + 25 = <span class="f-good">約 95 歲</span>（延後至 70 領不一定划算）<br/><br/>
+        <span class="f-comment">// 結論：65 歲標準請領通常最優，大幅提前請領（60 歲）損失最多</span>
+      </div>
+
+      <div class="content-block">
+        <div class="block-label">勞退 + 勞保對退休規劃的整體貢獻估算</div>
+        <div class="steps">
+          <div class="step-item">
+            <div class="step-num">01</div>
+            <div class="step-content">
+              <div class="step-title">登入勞保局網站查詢個人帳戶餘額</div>
+              <div class="step-desc">透過勞動部勞工保險局 e 化服務系統，可以查詢你的勞退個人帳戶累積金額，以及勞保投保年資和估算年金金額。這是退休規劃的必要數據，應每年更新一次你的退休財務試算表。</div>
+            </div>
+          </div>
+          <div class="step-item">
+            <div class="step-num">02</div>
+            <div class="step-content">
+              <div class="step-title">將勞保月領金額轉換為「等值退休資產」</div>
+              <div class="step-desc">若勞保月領 2 萬元，年領 24 萬元，相當於投資組合每年提領 4%，即等同於持有 600 萬元的投資組合（24 萬 ÷ 4% = 600 萬）。這筆「隱形資產」應計入你的退休資產總額，可顯著降低你需要從個人投資組合提領的壓力。</div>
+            </div>
+          </div>
+          <div class="step-item">
+            <div class="step-num">03</div>
+            <div class="step-content">
+              <div class="step-title">計算個人投資組合需要補足的缺口</div>
+              <div class="step-desc">退休所需年收入 − 勞保年金 − 勞退月領 = 需由個人投資組合補足的年度缺口。以這個缺口金額除以 3–4%，得到你需要自行積累的投資組合目標。加上勞保勞退的等值資產後，才是你真正的總退休資產目標。</div>
+            </div>
+          </div>
+          <div class="step-item">
+            <div class="step-num">04</div>
+            <div class="step-content">
+              <div class="step-title">勞退自提 6%：讓帳戶加速積累的唯一可控槓桿</div>
+              <div class="step-desc">雇主提撥 6% 是法定的，你無法改變。但自提 0–6% 的額度，是你對勞退帳戶唯一的主動控制權。自提不僅直接增加退休金，且自提金額當年度免計入所得——是同時達到節稅和退休儲蓄雙重目標的最高效工具。任何邊際稅率在 12% 以上的工作者，都應設定為 6%。</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="takeaway">
+        <div class="takeaway-label">本單元核心結論</div>
+        <div class="takeaway-text">勞退和勞保是台灣受薪階層最容易被低估的退休資產。將勞保年金的月領金額轉換為「等值資產」後，它可能代表數百萬元的隱形退休財富。正確的策略是：最大化勞退自提（節稅兼儲蓄）、65 歲標準年齡請領勞保（通常最優）、並以個人投資組合補足缺口。</div>
+      </div>
+
+      <div class="tools-row">
+        <span class="tool-tag primary">勞保年金試算工具</span>
+        <span class="tool-tag">勞退 + 勞保等值資產計算器</span>
+        <span class="tool-tag">退休收入來源整合試算表</span>
+      </div>
+    </section>
+
+    <!-- ════════════════════════════════ LESSON 3 ════════════════════════════════ -->
+    <section class="lesson" id="lesson-3">
+      <div class="lesson-header">
+        <div class="lesson-tag-row">
+          <span class="lesson-num-tag">Lesson 09—03</span>
+          <span class="lesson-duration">約 24 分鐘</span>
+        </div>
+        <h2 class="lesson-title">退休提領策略<br/>與長壽風險管理</h2>
+        <p class="lesson-subtitle">擁有足夠的退休資產只是第一步，如何在數十年的退休期間有計劃地提領，讓資產在你有生之年不耗盡，同時維持生活品質，是同等重要的第二步。</p>
+      </div>
+
+      <div class="content-block">
+        <div class="block-label">長壽風險：退休規劃中最被低估的威脅</div>
+        <p class="body-text">長壽風險是指活得比你的資產更長的風險。它在情緒上不像市場崩盤那樣劇烈，但財務後果可能更嚴重——一個在 90 歲耗盡資產的人，往往無法再重新工作或修正軌道。<strong>台灣的長壽趨勢正在加速</strong>：2024 年的 65 歲女性，平均預期壽命超過 88 歲，且每四個人中約有一人會活到 95 歲以上。</p>
+        <p class="body-text">長壽風險管理的核心，不是「假裝你不會活那麼長」，而是「設計一個即使你活到 100 歲也不會出問題的財務結構」。這需要在資產充足性（不太少）和資產過度節省（不太多）之間找到平衡。</p>
+      </div>
+
+      <table class="longevity-table">
+        <thead>
+          <tr>
+            <th>退休年齡</th>
+            <th>台灣男性<br/>至 90 歲機率</th>
+            <th>台灣女性<br/>至 90 歲機率</th>
+            <th>需要的提領年數</th>
+            <th>建議提領率</th>
+            <th>說明</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="td-age">55 歲<br/>提早退休</td>
+            <td class="td-mono">約 31%</td>
+            <td class="td-mono">約 47%</td>
+            <td class="td-mono">35–45 年</td>
+            <td><span class="td-risk">2.5–3.0%</span></td>
+            <td>極長退休期，4% 法則明顯不足。需要非常保守的提領率或顯著更高的初始資產。</td>
+          </tr>
+          <tr>
+            <td class="td-age">60 歲<br/>提前退休</td>
+            <td class="td-mono">約 37%</td>
+            <td class="td-mono">約 53%</td>
+            <td class="td-mono">30–40 年</td>
+            <td><span class="td-risk">3.0–3.5%</span></td>
+            <td>長壽風險顯著。女性超過一半會活到 90 歲，需比 4% 法則更保守的計劃。</td>
+          </tr>
+          <tr>
+            <td class="td-age">65 歲<br/>標準退休</td>
+            <td class="td-mono">約 28%</td>
+            <td class="td-mono">約 45%</td>
+            <td class="td-mono">25–35 年</td>
+            <td><span class="td-ok">3.5–4.0%</span></td>
+            <td>標準退休年齡，4% 法則在此情境最符合原始研究假設，適用度最高。</td>
+          </tr>
+          <tr>
+            <td class="td-age">70 歲<br/>晚退休</td>
+            <td class="td-mono">約 18%</td>
+            <td class="td-mono">約 32%</td>
+            <td class="td-mono">20–25 年</td>
+            <td><span class="td-ok">4.0–5.0%</span></td>
+            <td>退休期相對較短，可使用較高的提領率，資產耗盡的風險相對可控。</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="content-block">
+        <div class="block-label">三桶水提領策略：退休資產管理的最佳實踐</div>
+        <p class="body-text">「三桶水策略（Bucket Strategy）」是目前退休財務規劃中廣被認可的提領架構。它把退休資產分成三個不同時間用途的「桶」，每個桶持有不同風險特性的資產，解決了長壽風險和序列風險的雙重挑戰。</p>
+      </div>
+
+      <div class="withdrawal-block">
+        <div class="wb-header">
+          <div class="wb-title">三桶水退休提領策略</div>
+          <div class="wb-sub">短期安全 · 中期穩健 · 長期成長</div>
+        </div>
+        <div class="wb-buckets">
+          <div class="wb-bucket">
+            <div class="wb-bucket-num">Bucket 01</div>
+            <div class="wb-bucket-name">即時消費桶</div>
+            <div class="wb-bucket-range">覆蓋退休後 1–3 年支出</div>
+            <div class="wb-alloc-rows">
+              <div class="wb-alloc-row">
+                <div class="wb-alloc-label">持有資產</div>
+                <div class="wb-alloc-val"><strong>現金、活存、貨幣市場基金</strong>、短期定存</div>
+              </div>
+              <div class="wb-alloc-row">
+                <div class="wb-alloc-label">目的</div>
+                <div class="wb-alloc-val">提供 1–3 年的生活費，讓你在市場崩盤時，<strong>完全不需動用投資組合</strong>，避免被迫低點賣出</div>
+              </div>
+              <div class="wb-alloc-row">
+                <div class="wb-alloc-label">規模</div>
+                <div class="wb-alloc-val">年支出 × 2–3 年，例如年支出 60 萬，保留 120–180 萬元</div>
+              </div>
+              <div class="wb-alloc-row">
+                <div class="wb-alloc-label">補充時機</div>
+                <div class="wb-alloc-val">當股市上漲時，從第二桶轉入補充；股市下跌時，繼續使用此桶，不動第二、三桶</div>
+              </div>
+            </div>
+          </div>
+          <div class="wb-bucket">
+            <div class="wb-bucket-num">Bucket 02</div>
+            <div class="wb-bucket-name">中期穩健桶</div>
+            <div class="wb-bucket-range">覆蓋退休後 4–10 年支出</div>
+            <div class="wb-alloc-rows">
+              <div class="wb-alloc-row">
+                <div class="wb-alloc-label">持有資產</div>
+                <div class="wb-alloc-val"><strong>短中期債券 ETF</strong>（BND、投資等級公司債）、配息型資產</div>
+              </div>
+              <div class="wb-alloc-row">
+                <div class="wb-alloc-label">目的</div>
+                <div class="wb-alloc-val">提供穩定現金流和配息，定期補充第一桶；在股市下跌時，波動遠低於股票，不受重大衝擊</div>
+              </div>
+              <div class="wb-alloc-row">
+                <div class="wb-alloc-label">規模</div>
+                <div class="wb-alloc-val">退休資產的 25–35%，確保即使股市持續低迷 5–7 年，生活費仍有來源</div>
+              </div>
+              <div class="wb-alloc-row">
+                <div class="wb-alloc-label">補充時機</div>
+                <div class="wb-alloc-val">股市強勁時，賣出部分第三桶獲利轉入；或直接使用配息收入補充第一桶</div>
+              </div>
+            </div>
+          </div>
+          <div class="wb-bucket">
+            <div class="wb-bucket-num">Bucket 03</div>
+            <div class="wb-bucket-name">長期成長桶</div>
+            <div class="wb-bucket-range">覆蓋退休後 10 年以上</div>
+            <div class="wb-alloc-rows">
+              <div class="wb-alloc-row">
+                <div class="wb-alloc-label">持有資產</div>
+                <div class="wb-alloc-val"><strong>全球股票 ETF</strong>（VT、0050）、成長型資產，長期持有不頻繁動用</div>
+              </div>
+              <div class="wb-alloc-row">
+                <div class="wb-alloc-label">目的</div>
+                <div class="wb-alloc-val">對抗通膨的長期引擎。因有第一、二桶緩衝，這部分可以完全忽略短期波動，讓複利充分發揮</div>
+              </div>
+              <div class="wb-alloc-row">
+                <div class="wb-alloc-label">規模</div>
+                <div class="wb-alloc-val">退休資產的 40–60%，讓退休資產的主體仍在成長，對抗 20–30 年的通膨侵蝕</div>
+              </div>
+              <div class="wb-alloc-row">
+                <div class="wb-alloc-label">補充時機</div>
+                <div class="wb-alloc-val">股市大幅上漲後，進行年度再平衡，將超額獲利轉至第一、二桶，同時鎖定獲利</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="wb-note">三桶水策略的核心優勢：它解決了退休者最常面對的心理困境——「市場崩盤時不敢動用帳戶，但又擔心現金不夠」。有了 1–3 年的即時現金桶，即使看到投資組合下跌 40%，你知道接下來 3 年的生活費已經有著落，不需要在最差的時機賣出資產。</div>
+      </div>
+
+      <div class="takeaway">
+        <div class="takeaway-label">本單元核心結論</div>
+        <div class="takeaway-text">退休後的資產管理，和累積期的資產管理同等重要，但邏輯不同。三桶水策略將資產按使用時間分層，用短期穩定保護長期成長，是目前退休提領框架中最符合人性和財務邏輯的設計。長壽風險要求你把退休期至少規劃 30 年，而不是以平均壽命為準。</div>
+      </div>
+
+      <div class="tools-row">
+        <span class="tool-tag primary">三桶水策略個人化設置工作表</span>
+        <span class="tool-tag">長壽風險機率計算器</span>
+        <span class="tool-tag">序列風險情境模擬</span>
+      </div>
+    </section>
+
+    <!-- ════════════════════════════════ LESSON 4 ════════════════════════════════ -->
+    <section class="lesson" id="lesson-4">
+      <div class="lesson-header">
+        <div class="lesson-tag-row">
+          <span class="lesson-num-tag">Lesson 09—04</span>
+          <span class="lesson-duration">約 22 分鐘</span>
+        </div>
+        <h2 class="lesson-title">建立多元<br/>被動收入體系</h2>
+        <p class="lesson-subtitle">退休後的財務安全感，不只來自帳戶裡的數字，更來自持續流入的現金流。建立多元被動收入體系，讓退休生活的財務基礎不依賴單一來源，是「財務韌性」的最佳體現。</p>
+      </div>
+
+      <div class="content-block">
+        <div class="block-label">被動收入的定義與真實成本</div>
+        <p class="body-text">「被動收入」是一個被嚴重美化的詞彙。真正的被動收入——一旦建立後幾乎不需要持續投入時間和精力——極為稀少。大多數被稱為「被動收入」的來源，在建立初期需要大量的時間、資本或技能投入，維護期也需要一定程度的管理。</p>
+        <p class="body-text"><strong>真正的被動收入光譜應該從「接近完全被動」到「需要持續管理」排列</strong>。投資型被動收入（股利、債息）是最接近真正被動的，不動產租金次之，數位產品或版稅需要大量前置工作。理解這個光譜，有助於你根據自己的時間、資本和技能，選擇最適合的被動收入組合。</p>
+      </div>
+
+      <div class="data-row">
+        <div class="data-cell">
+          <div class="data-num">3–4%</div>
+          <div class="data-label">全球股票 ETF<br/>長期平均股利殖利率</div>
+        </div>
+        <div class="data-cell">
+          <div class="data-num">4–5%</div>
+          <div class="data-label">台灣高股息 ETF<br/>平均配息殖利率</div>
+        </div>
+        <div class="data-cell">
+          <div class="data-num">2–3%</div>
+          <div class="data-label">台北市住宅<br/>年租金報酬率（毛）</div>
+        </div>
+      </div>
+
+      <div class="content-block">
+        <div class="block-label">六大被動收入來源：完整矩陣分析</div>
+      </div>
+
+      <table class="passive-matrix">
+        <thead>
+          <tr>
+            <th>收入來源</th>
+            <th>所需起始資本</th>
+            <th>年報酬率參考</th>
+            <th>被動程度</th>
+            <th>主要風險</th>
+            <th>適合誰</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>
+              <span class="td-source">股利 / ETF 配息</span>
+              <span class="td-en">Dividend Income</span>
+            </td>
+            <td class="td-mono">任意金額起步</td>
+            <td class="td-mono td-good">3–5% / 年</td>
+            <td><span class="td-effort low">極高被動</span></td>
+            <td>股利可能被削減；高股息 ETF 長期總報酬可能低於市值型；台灣 ETF 有股利稅</td>
+            <td>所有投資人的基礎層；退休後配息作為現金流的主要來源之一</td>
+          </tr>
+          <tr>
+            <td>
+              <span class="td-source">債券 / 固定收益</span>
+              <span class="td-en">Bond Interest</span>
+            </td>
+            <td class="td-mono">任意金額起步</td>
+            <td class="td-mono td-good">4–5% / 年</td>
+            <td><span class="td-effort low">極高被動</span></td>
+            <td>利率風險（升息時價格下跌）；通膨風險；若持有個別公司債則有信用風險</td>
+            <td>退休後需要穩定現金流、承受能力低、配合三桶水策略中期桶使用</td>
+          </tr>
+          <tr>
+            <td>
+              <span class="td-source">不動產租金</span>
+              <span class="td-en">Rental Income</span>
+            </td>
+            <td class="td-mono">500 萬 元以上</td>
+            <td class="td-mono">2–4%（毛）<br/>扣成本後 1–3%</td>
+            <td><span class="td-effort high">中等被動</span></td>
+            <td class="td-warn">管理成本、空置風險、維修支出、房價下跌風險、台北租金報酬率偏低、資本集中</td>
+            <td>已持有房產且已還清房貸；或在台北以外租金報酬率較高地區的投資人</td>
+          </tr>
+          <tr>
+            <td>
+              <span class="td-source">REITs 投資</span>
+              <span class="td-en">Real Estate Investment Trust</span>
+            </td>
+            <td class="td-mono">任意金額起步</td>
+            <td class="td-mono td-good">4–6% / 年</td>
+            <td><span class="td-effort low">極高被動</span></td>
+            <td>利率敏感（升息時評價下跌）；與股市有一定相關性；台灣 REIT 市場規模有限</td>
+            <td>想獲得不動產曝險但不想直接管理房產；可透過全球 REIT ETF（如 VNQ）取得</td>
+          </tr>
+          <tr>
+            <td>
+              <span class="td-source">版稅 / 數位產品</span>
+              <span class="td-en">Royalties / Digital Products</span>
+            </td>
+            <td class="td-mono">時間投入為主</td>
+            <td class="td-mono">高度不確定</td>
+            <td><span class="td-effort high">前期高投入</span></td>
+            <td>需要大量前期工作；收入不穩定；需持續維護和更新；多數嘗試最終收益微薄</td>
+            <td>擁有特定專業知識或創作能力；有時間和意願投入前期建設；不應作為退休主要財源計劃</td>
+          </tr>
+          <tr>
+            <td>
+              <span class="td-source">勞保 / 勞退年金</span>
+              <span class="td-en">Labour Insurance Pension</span>
+            </td>
+            <td class="td-mono">工作期間持續繳費</td>
+            <td class="td-mono">依年資和薪資計算</td>
+            <td><span class="td-effort low">完全被動</span></td>
+            <td class="td-warn">勞保財務缺口的長期不確定性；通膨調整機制有限；提前請領大幅減少年金金額</td>
+            <td>所有台灣受僱勞工的退休收入基礎層，與投資組合搭配使用，而非單獨依賴</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="content-block">
+        <div class="block-label">退休被動收入體系的三層設計</div>
+        <p class="body-text">一個健全的退休被動收入體系，應該由三個不同性質的收入來源疊加，確保沒有單一來源的失效能夠動搖整個體系。</p>
+      </div>
+
+      <div class="steps">
+        <div class="step-item">
+          <div class="step-num">基礎層</div>
+          <div class="step-content">
+            <div class="step-title">社會安全網：勞保年金 + 勞退月領</div>
+            <div class="step-desc">這是你無論投資表現如何都能領到的基礎保障（在勞保財務可持續的前提下）。以台灣中位數薪資工作 30 年，合計約可月領 3–4 萬元，是退休收入的地板，確保基本生活費用有著落。策略重點：最大化勞退自提 6%，65 歲標準年齡請領勞保，讓這層收入盡可能高。</div>
+          </div>
+        </div>
+        <div class="step-item">
+          <div class="step-num">主力層</div>
+          <div class="step-content">
+            <div class="step-title">投資組合配息：ETF 股利 + 債券利息</div>
+            <div class="step-desc">這是退休收入的主體，來自你數十年積累的投資組合所自然產生的股利和利息。持有 1,500 萬元、年均配息率 3.5% 的組合，每年自然產生約 52.5 萬元配息，不需要賣出本金。策略重點：在退休前數年，逐漸增加配息型資產的比例（高股息 ETF、債券 ETF），讓自然現金流覆蓋大部分生活費，降低對本金提領的依賴。</div>
+          </div>
+        </div>
+        <div class="step-item">
+          <div class="step-num">緩衝層</div>
+          <div class="step-content">
+            <div class="step-title">彈性提領：本金有計劃提領（三桶水策略）</div>
+            <div class="step-desc">當配息收入不足以覆蓋某些年份的支出（醫療緊急、大額旅行、子女婚禮），從投資組合本金進行有計劃的提領。使用三桶水策略確保提領在最有利的時機發生——從現金桶提領，而不是在股市下跌時強制賣出股票桶。策略重點：每年評估實際支出與配息的差距，決定是否需要補充提領，以及從哪個桶補充。</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="highlight-box">
+        <div class="hl-label">退休被動收入體系：一個完整的數字範例</div>
+        <div class="hl-text">
+          假設：65 歲退休，目標月支出 6 萬元（年支出 72 萬元），個人投資組合 1,500 萬元<br/><br/>
+          <strong>基礎層：</strong>勞保年金月領約 2.1 萬元 + 勞退月領約 1.2 萬元 = 月收入 <strong>3.3 萬元</strong><br/>
+          <strong>主力層：</strong>1,500 萬 × 3.5% 配息率 = 年配息 52.5 萬，月約 <strong>4.4 萬元</strong><br/>
+          <strong>月度收入合計：</strong>3.3 + 4.4 = <strong>7.7 萬元</strong>（超過目標 6 萬元 28%，有餘裕）<br/><br/>
+          在此架構下，投資組合本金幾乎不需要提領——配息和年金已覆蓋所有支出，本金得以繼續複利增長，對抗通膨並作為遺產。這正是退休財務設計的理想狀態：讓收入持續流入，而非持續耗盡資產。
+        </div>
+      </div>
+
+      <div class="pull-quote">
+        <div class="pull-quote-text">「退休財務自由不是一個終點狀態，而是一種結構——一個能夠在你不工作的情況下仍然自我維持和成長的財務引擎。建立這個引擎，是這門課所有模組的最終目的地。」</div>
+        <div class="pull-quote-source">— 個人退休財務規劃的核心哲學</div>
+      </div>
+
+      <div class="takeaway">
+        <div class="takeaway-label">本單元核心結論</div>
+        <div class="takeaway-text">最穩健的退休被動收入體系，由三層構成：社會保障的地板（勞保 + 勞退）、投資組合配息的主體、以及有計劃提領的彈性緩衝。沒有單一來源需要承擔全部壓力，沒有單一來源的失效能夠動搖整個體系。這種分層設計，是退休財務韌性的最佳體現。</div>
+      </div>
+
+      <div class="tools-row">
+        <span class="tool-tag primary">退休被動收入體系規劃工作表</span>
+        <span class="tool-tag">三層收入架構試算器</span>
+        <span class="tool-tag">退休月度現金流追蹤模板</span>
+        <span class="tool-tag">配息率 vs. 總報酬比較分析</span>
+      </div>
+    </section>
+
+  </div>
+</div>
+
+<!-- CHAPTER FOOTER -->
+<div class="chapter-footer">
+  <div>
+    <div class="cf-title">模組九 完成</div>
+    <h3 class="cf-heading">退休財務的完整架構已就位</h3>
+    <p class="cf-text">從 4% 法則計算目標資產、勞退勞保的最優策略、三桶水的提領設計，到多元被動收入的三層架構——你現在擁有了規劃和執行退休財務所需的全套工具。最後一個模組，將把這些全部整合成你的個人財務自由藍圖。</p>
+    <div class="cf-nav-links">
+      <a class="cf-link prev" href="chapter8.html">返回模組八</a>
+      <a class="cf-link" href="chapter10.html">前往模組十</a>
+    </div>
+  </div>
+  <div>
+    <div class="cf-title">最終模組</div>
+    <h3 class="cf-heading">模組十：財務自由藍圖實戰</h3>
+    <p class="cf-text">十個模組的知識，匯聚於此。你將把每一個模組的核心洞見整合成一份量身訂做的個人財務自由藍圖——從現在的起點，到你定義的終點，包含具體的里程碑、行動清單，以及應對生命各種變數的調整機制。</p>
+  </div>
+</div>
+
+<footer class="site-footer">
+  <div class="sf-logo">FINANCE<span>.</span>COURSE</div>
+  <div class="sf-copy">個人理財與資產配置基礎 · 模組九 / 共十模組</div>
+</footer>
+
+<script>
+  window.addEventListener('scroll', () => {
+    const el = document.documentElement;
+    const pct = el.scrollTop / (el.scrollHeight - el.clientHeight) * 100;
+    document.getElementById('progress-bar').style.width = pct + '%';
+  });
+
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+  }, { threshold: 0.07 });
+  document.querySelectorAll('.lesson').forEach(el => observer.observe(el));
+
+  const sideLinks = document.querySelectorAll('.lesson-nav a');
+  const topLinks  = document.querySelectorAll('.nav-links a[href^="#"]');
+  const sideObs = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        const id = e.target.id;
+        sideLinks.forEach(a => a.classList.toggle('active', a.getAttribute('href') === '#' + id));
+        topLinks.forEach(a  => a.classList.toggle('active', a.getAttribute('href') === '#' + id));
+      }
+    });
+  }, { threshold: 0.45 });
+  document.querySelectorAll('.lesson').forEach(el => sideObs.observe(el));
+</script>
+</body>
+</html>
