@@ -1,0 +1,1191 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>模組十：財務自由藍圖實戰</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@300;400;500;600;700;900&family=IBM+Plex+Mono:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --cream:        #F5F0E8;
+      --cream-dark:   #EDE6D6;
+      --cream-mid:    #E4DBC8;
+      --cream-border: #D0C4AC;
+      --ink:          #1A1510;
+      --ink-light:    #3D3228;
+      --ink-muted:    #7A6E62;
+      --red:          #C0392B;
+      --red-wash:     #F0E0DD;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; font-size: 16px; }
+
+    body {
+      background: var(--cream);
+      color: var(--ink);
+      font-family: 'Noto Serif TC', Georgia, serif;
+      line-height: 1.8;
+      overflow-x: hidden;
+    }
+
+    body::after {
+      content: '';
+      position: fixed; inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+      pointer-events: none; z-index: 9000;
+    }
+
+    #progress-bar {
+      position: fixed; top: 0; left: 0;
+      height: 2px; background: var(--red);
+      z-index: 9999; transition: width 0.08s linear;
+    }
+
+    /* ── TOP NAV ── */
+    .top-nav {
+      position: sticky; top: 0; z-index: 500;
+      background: var(--cream-dark);
+      border-bottom: 1px solid var(--cream-border);
+      padding: 0 60px;
+      display: flex; align-items: center; justify-content: space-between;
+      height: 52px;
+    }
+    .nav-breadcrumb { font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.14em; color: var(--ink-muted); text-transform: uppercase; }
+    .nav-breadcrumb span { color: var(--red); }
+    .nav-links { display: flex; }
+    .nav-links a {
+      font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.12em;
+      text-transform: uppercase; color: var(--ink-muted); text-decoration: none;
+      padding: 0 20px; height: 52px; display: flex; align-items: center;
+      border-left: 1px solid var(--cream-border); transition: color 0.2s, background 0.2s;
+    }
+    .nav-links a:hover { color: var(--ink); background: var(--cream-mid); }
+    .nav-links a.active { color: var(--red); }
+
+    /* ── HERO ── */
+    .hero {
+      padding: 100px 60px 100px;
+      border-bottom: 2px solid var(--ink);
+      position: relative; overflow: hidden;
+      background: var(--ink);
+    }
+    .hero-rule { position: absolute; top: 44px; left: 60px; right: 60px; height: 1px; background: rgba(245,240,232,0.2); }
+    .hero-meta { font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: rgba(245,240,232,0.45); margin-bottom: 32px; display: flex; align-items: center; gap: 20px; }
+    .hero-meta .dot { width: 4px; height: 4px; background: var(--red); display: inline-block; }
+    .hero-meta .mod-label { color: var(--red); font-weight: 500; }
+    .hero-title { font-size: clamp(40px, 7vw, 88px); font-weight: 900; line-height: 1.0; letter-spacing: -0.025em; max-width: 900px; color: var(--cream); }
+    .hero-title .line2 { display: block; color: var(--red); }
+    .hero-deck { margin-top: 28px; max-width: 600px; font-size: 17px; font-weight: 300; color: rgba(245,240,232,0.65); line-height: 1.9; }
+    .hero-meta-bottom { margin-top: 52px; display: flex; gap: 48px; padding-top: 36px; border-top: 1px solid rgba(245,240,232,0.12); }
+    .meta-item { display: flex; flex-direction: column; gap: 4px; }
+    .meta-label { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: rgba(245,240,232,0.35); }
+    .meta-value { font-family: 'IBM Plex Mono', monospace; font-size: 18px; font-weight: 600; color: var(--cream); }
+    .hero-number { position: absolute; right: 40px; bottom: -20px; font-family: 'IBM Plex Mono', monospace; font-size: 260px; font-weight: 600; color: rgba(245,240,232,0.04); line-height: 1; user-select: none; pointer-events: none; letter-spacing: -0.05em; }
+    .hero-final-badge {
+      position: absolute; top: 52px; right: 60px;
+      font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase;
+      color: var(--red); border: 1px solid var(--red); padding: 8px 18px;
+    }
+
+    /* ── COURSE COMPLETE BANNER ── */
+    .course-banner {
+      background: var(--red); color: var(--cream);
+      padding: 18px 60px;
+      display: flex; align-items: center; justify-content: space-between;
+      border-bottom: 2px solid var(--ink);
+    }
+    .cb-text { font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; }
+    .cb-modules { display: flex; gap: 0; }
+    .cb-module { width: 28px; height: 6px; background: rgba(245,240,232,0.4); margin-right: 3px; }
+    .cb-module.done { background: var(--cream); }
+
+    /* ── LAYOUT ── */
+    .page-body { display: grid; grid-template-columns: 220px 1fr; }
+
+    /* ── SIDEBAR ── */
+    .lesson-nav { border-right: 1px solid var(--cream-border); padding: 48px 28px; position: sticky; top: 52px; height: calc(100vh - 52px); overflow-y: auto; background: var(--cream-dark); }
+    .lesson-nav-title { font-family: 'IBM Plex Mono', monospace; font-size: 9px; letter-spacing: 0.25em; text-transform: uppercase; color: var(--ink-muted); margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px solid var(--cream-border); }
+    .lesson-nav a { display: block; padding: 10px 0; font-size: 13px; font-weight: 500; color: var(--ink-muted); text-decoration: none; transition: color 0.18s; line-height: 1.45; border-bottom: 1px solid var(--cream-border); }
+    .lesson-nav a:last-child { border-bottom: none; }
+    .lesson-nav a:hover { color: var(--ink); }
+    .lesson-nav a.active { color: var(--red); }
+    .lesson-nav .ln-num { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.1em; color: var(--cream-border); display: block; margin-bottom: 2px; transition: color 0.18s; }
+    .lesson-nav a.active .ln-num { color: var(--red); }
+    .lesson-nav a:hover .ln-num { color: var(--ink-muted); }
+
+    /* ── LESSON ── */
+    .lessons-content { padding: 0; }
+    .lesson { padding: 80px 80px 72px; border-bottom: 1px solid var(--cream-border); opacity: 0; transform: translateY(18px); transition: opacity 0.55s ease, transform 0.55s ease; }
+    .lesson.visible { opacity: 1; transform: translateY(0); }
+    .lesson:nth-child(even) { background: var(--cream-dark); }
+
+    .lesson-header { margin-bottom: 52px; padding-bottom: 36px; border-bottom: 1px solid var(--cream-border); }
+    .lesson-tag-row { display: flex; align-items: center; gap: 16px; margin-bottom: 16px; }
+    .lesson-num-tag { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--red); font-weight: 500; }
+    .lesson-duration { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.15em; color: var(--ink-muted); }
+    .lesson-title { font-size: clamp(22px, 3vw, 34px); font-weight: 700; line-height: 1.25; letter-spacing: -0.01em; margin-bottom: 12px; }
+    .lesson-subtitle { font-size: 15px; font-weight: 300; color: var(--ink-muted); line-height: 1.7; max-width: 560px; }
+
+    /* ── SHARED ── */
+    .content-block { margin-bottom: 48px; }
+    .block-label { font-family: 'IBM Plex Mono', monospace; font-size: 9px; letter-spacing: 0.28em; text-transform: uppercase; color: var(--ink-muted); margin-bottom: 16px; padding-bottom: 8px; border-bottom: 1px solid var(--cream-border); }
+    .body-text { font-size: 15.5px; line-height: 2.0; color: var(--ink-light); }
+    .body-text + .body-text { margin-top: 20px; }
+    .body-text strong { color: var(--ink); font-weight: 600; }
+
+    .pull-quote { margin: 40px 0; padding: 28px 0 28px 36px; border-left: 3px solid var(--red); }
+    .pull-quote-text { font-size: 19px; font-weight: 500; line-height: 1.7; color: var(--ink); font-style: italic; }
+    .pull-quote-source { margin-top: 12px; font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.1em; color: var(--red); }
+
+    .data-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--cream-border); border: 1px solid var(--cream-border); margin: 36px 0; }
+    .data-cell { background: var(--cream); padding: 28px; transition: background 0.2s; }
+    .lesson:nth-child(even) .data-cell { background: var(--cream-dark); }
+    .data-cell:hover { background: var(--red-wash); }
+    .data-num { font-family: 'IBM Plex Mono', monospace; font-size: 36px; font-weight: 600; color: var(--red); line-height: 1; margin-bottom: 8px; }
+    .data-label { font-size: 13px; color: var(--ink-muted); line-height: 1.5; }
+
+    .concept-list { margin: 28px 0; border: 1px solid var(--cream-border); }
+    .concept-item { display: grid; grid-template-columns: 200px 1fr; border-bottom: 1px solid var(--cream-border); }
+    .concept-item:last-child { border-bottom: none; }
+    .concept-term { padding: 20px 24px; font-weight: 600; font-size: 14px; line-height: 1.5; border-right: 1px solid var(--cream-border); background: var(--cream-mid); }
+    .concept-def { padding: 20px 28px; font-size: 14px; color: var(--ink-muted); line-height: 1.7; }
+
+    .steps { margin: 28px 0; }
+    .step-item { display: grid; grid-template-columns: 52px 1fr; border-bottom: 1px solid var(--cream-border); }
+    .step-item:first-child { border-top: 1px solid var(--cream-border); }
+    .step-num { font-family: 'IBM Plex Mono', monospace; font-size: 11px; font-weight: 600; color: var(--cream); background: var(--ink); display: flex; align-items: center; justify-content: center; padding: 20px 0; }
+    .step-content { padding: 20px 28px; }
+    .step-title { font-size: 15px; font-weight: 600; margin-bottom: 6px; }
+    .step-desc { font-size: 13.5px; color: var(--ink-muted); line-height: 1.7; }
+
+    .highlight-box { background: var(--ink); color: var(--cream); padding: 36px 40px; margin: 36px 0; }
+    .highlight-box .hl-label { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--red); margin-bottom: 14px; }
+    .highlight-box .hl-text { font-size: 15px; line-height: 1.9; color: rgba(245,240,232,0.82); }
+    .highlight-box .hl-text strong { color: var(--cream); }
+
+    .formula-block { font-family: 'IBM Plex Mono', monospace; background: var(--cream-mid); border: 1px solid var(--cream-border); padding: 28px 32px; margin: 28px 0; font-size: 14px; line-height: 2.2; color: var(--ink); }
+    .formula-block .f-comment { color: var(--ink-muted); font-size: 12px; }
+    .formula-block .f-highlight { color: var(--red); font-weight: 600; }
+    .formula-block .f-good { color: var(--ink); font-weight: 600; }
+
+    .takeaway { margin-top: 48px; padding-top: 32px; border-top: 2px solid var(--ink); }
+    .takeaway-label { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.25em; text-transform: uppercase; color: var(--red); margin-bottom: 14px; }
+    .takeaway-text { font-size: 17px; font-weight: 500; font-style: italic; color: var(--ink); line-height: 1.75; }
+
+    .tools-row { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 40px; padding-top: 28px; border-top: 1px solid var(--cream-border); }
+    .tool-tag { font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.06em; padding: 6px 16px; border: 1px solid var(--cream-border); color: var(--ink-muted); }
+    .tool-tag.primary { border-color: var(--red); color: var(--red); background: var(--red-wash); }
+
+    /* ── FI STAGES ── */
+    .fi-stages { margin: 36px 0; border: 1px solid var(--cream-border); }
+    .fi-stages-header { background: var(--ink); padding: 14px 28px; font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--red); }
+    .fi-stage-row { display: grid; grid-template-columns: 140px 90px 1fr 200px; border-bottom: 1px solid var(--cream-border); align-items: stretch; }
+    .fi-stage-row:last-child { border-bottom: none; }
+    .fi-stage-name { padding: 20px 20px; font-weight: 700; font-size: 14px; color: var(--ink); border-right: 1px solid var(--cream-border); background: var(--cream-mid); display: flex; flex-direction: column; justify-content: center; }
+    .fi-stage-name small { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--red); font-weight: 400; letter-spacing: 0.1em; margin-top: 3px; }
+    .fi-stage-net { font-family: 'IBM Plex Mono', monospace; font-size: 14px; font-weight: 600; color: var(--ink); padding: 20px 14px; border-right: 1px solid var(--cream-border); display: flex; align-items: center; justify-content: center; text-align: center; line-height: 1.4; }
+    .fi-stage-desc { padding: 20px 22px; font-size: 13.5px; color: var(--ink-muted); line-height: 1.7; border-right: 1px solid var(--cream-border); }
+    .fi-stage-desc strong { color: var(--ink); }
+    .fi-stage-action { padding: 20px 22px; font-size: 12.5px; color: var(--ink-muted); line-height: 1.65; }
+    .fi-stage-action strong { color: var(--red); font-size: 12px; font-family: 'IBM Plex Mono', monospace; letter-spacing: 0.08em; }
+
+    /* ── BLUEPRINT TEMPLATE ── */
+    .blueprint { margin: 36px 0; border: 2px solid var(--ink); }
+    .blueprint-header { background: var(--ink); padding: 20px 32px; display: flex; justify-content: space-between; align-items: center; }
+    .blueprint-title { font-size: 16px; font-weight: 700; color: var(--cream); }
+    .blueprint-sub { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--red); }
+    .blueprint-sections { display: flex; flex-direction: column; }
+    .bp-section { border-bottom: 1px solid var(--cream-border); }
+    .bp-section:last-child { border-bottom: none; }
+    .bp-section-head { padding: 16px 32px; background: var(--cream-mid); display: flex; align-items: center; gap: 20px; border-bottom: 1px solid var(--cream-border); }
+    .bp-section-num { font-family: 'IBM Plex Mono', monospace; font-size: 11px; font-weight: 600; color: var(--red); letter-spacing: 0.15em; }
+    .bp-section-title { font-size: 14px; font-weight: 700; color: var(--ink); }
+    .bp-fields { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--cream-border); }
+    .bp-field { background: var(--cream); padding: 18px 22px; }
+    .lesson:nth-child(even) .bp-field { background: var(--cream-dark); }
+    .bp-field-label { font-family: 'IBM Plex Mono', monospace; font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--ink-muted); margin-bottom: 8px; }
+    .bp-field-line { height: 1px; background: var(--cream-border); margin-bottom: 10px; }
+    .bp-field-hint { font-size: 12px; color: var(--ink-muted); line-height: 1.6; font-style: italic; }
+    .bp-field-hint strong { color: var(--ink); font-style: normal; font-weight: 600; }
+    .bp-wide { grid-column: 1 / -1; }
+
+    /* ── MILESTONE TIMELINE ── */
+    .milestone-timeline { margin: 36px 0; border: 1px solid var(--cream-border); }
+    .mt-header { background: var(--ink); padding: 14px 28px; font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--red); }
+    .mt-rows { display: flex; flex-direction: column; }
+    .mt-row { display: grid; grid-template-columns: 120px 180px 1fr 160px; border-bottom: 1px solid var(--cream-border); align-items: stretch; }
+    .mt-row:last-child { border-bottom: none; }
+    .mt-phase { padding: 18px 18px; font-family: 'IBM Plex Mono', monospace; font-size: 12px; font-weight: 600; color: var(--ink); background: var(--cream-mid); border-right: 1px solid var(--cream-border); display: flex; flex-direction: column; justify-content: center; gap: 3px; line-height: 1.4; }
+    .mt-phase span { font-size: 10px; font-weight: 400; color: var(--red); }
+    .mt-milestone { padding: 18px 18px; font-size: 13.5px; font-weight: 600; color: var(--ink); border-right: 1px solid var(--cream-border); display: flex; align-items: center; line-height: 1.45; }
+    .mt-actions { padding: 18px 20px; font-size: 13px; color: var(--ink-muted); line-height: 1.7; border-right: 1px solid var(--cream-border); }
+    .mt-actions strong { color: var(--ink); font-weight: 600; }
+    .mt-kpi { padding: 18px 16px; font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--ink-muted); line-height: 1.65; }
+    .mt-kpi strong { color: var(--red); font-size: 11px; display: block; margin-bottom: 3px; }
+
+    /* ── OBSTACLE MAP ── */
+    .obstacle-map { margin: 28px 0; display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--cream-border); border: 1px solid var(--cream-border); }
+    .ob-card { background: var(--cream); padding: 24px 22px; }
+    .lesson:nth-child(even) .ob-card { background: var(--cream-dark); }
+    .ob-num { font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.2em; color: var(--red); text-transform: uppercase; margin-bottom: 8px; }
+    .ob-title { font-size: 15px; font-weight: 700; color: var(--ink); margin-bottom: 8px; line-height: 1.3; }
+    .ob-why { font-size: 13px; color: var(--ink-muted); line-height: 1.65; margin-bottom: 14px; padding-bottom: 12px; border-bottom: 1px solid var(--cream-border); }
+    .ob-rows { display: flex; flex-direction: column; }
+    .ob-row { display: grid; grid-template-columns: 68px 1fr; border-top: 1px solid var(--cream-border); }
+    .ob-row-label { font-family: 'IBM Plex Mono', monospace; font-size: 9px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--ink-muted); padding: 10px 6px 10px 0; border-right: 1px solid var(--cream-border); line-height: 1.4; }
+    .ob-row-val { padding: 10px 0 10px 10px; font-size: 12.5px; color: var(--ink-light); line-height: 1.55; }
+    .ob-row-val strong { color: var(--ink); }
+
+    /* ── TEN MODULE SYNTHESIS ── */
+    .module-synthesis { margin: 36px 0; border: 1px solid var(--cream-border); }
+    .ms-header { background: var(--ink); display: grid; grid-template-columns: 60px 200px 1fr 140px; }
+    .ms-header div { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: rgba(245,240,232,0.65); padding: 13px 16px; border-right: 1px solid rgba(255,255,255,0.08); }
+    .ms-header div:last-child { border-right: none; }
+    .ms-row { display: grid; grid-template-columns: 60px 200px 1fr 140px; border-bottom: 1px solid var(--cream-border); align-items: stretch; }
+    .ms-row:last-child { border-bottom: none; }
+    .ms-num { font-family: 'IBM Plex Mono', monospace; font-size: 22px; font-weight: 600; color: var(--cream-border); padding: 16px; border-right: 1px solid var(--cream-border); display: flex; align-items: center; justify-content: center; background: var(--cream-mid); line-height: 1; }
+    .ms-name { padding: 16px 18px; font-weight: 700; font-size: 14px; color: var(--ink); border-right: 1px solid var(--cream-border); display: flex; flex-direction: column; justify-content: center; }
+    .ms-name small { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--red); font-weight: 400; letter-spacing: 0.1em; margin-top: 2px; }
+    .ms-insight { padding: 16px 18px; font-size: 13.5px; color: var(--ink-muted); line-height: 1.65; border-right: 1px solid var(--cream-border); }
+    .ms-insight strong { color: var(--ink); }
+    .ms-action { padding: 16px 16px; font-size: 12.5px; color: var(--ink-light); line-height: 1.6; font-style: italic; }
+
+    /* ── DAILY HABITS ── */
+    .habit-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--cream-border); border: 1px solid var(--cream-border); margin: 28px 0; }
+    .habit-card { background: var(--cream); padding: 22px 20px; }
+    .lesson:nth-child(even) .habit-card { background: var(--cream-dark); }
+    .habit-freq { font-family: 'IBM Plex Mono', monospace; font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--red); margin-bottom: 8px; }
+    .habit-title { font-size: 15px; font-weight: 700; color: var(--ink); margin-bottom: 8px; line-height: 1.3; }
+    .habit-time { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--ink-muted); margin-bottom: 10px; }
+    .habit-divider { height: 1px; background: var(--cream-border); margin-bottom: 10px; }
+    .habit-items { display: flex; flex-direction: column; gap: 0; }
+    .habit-item { border-top: 1px solid var(--cream-border); padding: 8px 0; font-size: 12.5px; color: var(--ink-muted); line-height: 1.5; }
+    .habit-item:first-child { border-top: none; }
+
+    /* ── GRAND FINALE ── */
+    .finale-block {
+      background: var(--ink); padding: 80px 80px;
+      position: relative; overflow: hidden;
+    }
+    .finale-block::before {
+      content: 'FINAL';
+      position: absolute; right: 40px; top: 50%; transform: translateY(-50%);
+      font-family: 'IBM Plex Mono', monospace; font-size: 200px; font-weight: 700;
+      color: rgba(245,240,232,0.03); line-height: 1; pointer-events: none; user-select: none;
+    }
+    .finale-tag { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.25em; text-transform: uppercase; color: var(--red); margin-bottom: 24px; }
+    .finale-heading { font-size: clamp(28px, 4vw, 52px); font-weight: 900; line-height: 1.1; letter-spacing: -0.02em; color: var(--cream); max-width: 700px; margin-bottom: 32px; }
+    .finale-body { font-size: 16px; color: rgba(245,240,232,0.65); line-height: 2.0; max-width: 640px; margin-bottom: 48px; }
+    .finale-body strong { color: var(--cream); }
+    .finale-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: rgba(245,240,232,0.08); border: 1px solid rgba(245,240,232,0.08); margin-bottom: 48px; }
+    .fs-cell { padding: 24px 22px; }
+    .fs-num { font-family: 'IBM Plex Mono', monospace; font-size: 36px; font-weight: 600; color: var(--red); line-height: 1; margin-bottom: 6px; }
+    .fs-label { font-size: 12.5px; color: rgba(245,240,232,0.5); line-height: 1.5; }
+    .finale-principles { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: rgba(245,240,232,0.08); border: 1px solid rgba(245,240,232,0.08); }
+    .fp-item { padding: 24px 24px; }
+    .fp-num { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--red); margin-bottom: 8px; }
+    .fp-text { font-size: 14px; color: rgba(245,240,232,0.7); line-height: 1.75; }
+    .fp-text strong { color: var(--cream); }
+
+    /* ── CHAPTER FOOTER ── */
+    .chapter-footer { background: var(--cream-dark); padding: 72px 80px; display: grid; grid-template-columns: 1fr 1fr; gap: 80px; border-top: 2px solid var(--ink); }
+    .cf-title { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--red); margin-bottom: 16px; }
+    .cf-heading { font-size: 22px; font-weight: 700; line-height: 1.3; margin-bottom: 16px; color: var(--ink); }
+    .cf-text { font-size: 14px; color: var(--ink-muted); line-height: 1.85; }
+    .cf-nav-links { display: flex; gap: 32px; margin-top: 24px; }
+    .cf-link { font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink); text-decoration: none; border-bottom: 1px solid var(--red); padding-bottom: 2px; transition: color 0.2s; }
+    .cf-link:hover { color: var(--red); }
+
+    /* ── SITE FOOTER ── */
+    .site-footer { padding: 24px 60px; border-top: 1px solid var(--cream-border); display: flex; justify-content: space-between; align-items: center; background: var(--ink); }
+    .sf-logo { font-family: 'IBM Plex Mono', monospace; font-size: 12px; font-weight: 600; letter-spacing: 0.1em; color: var(--cream); }
+    .sf-logo span { color: var(--red); }
+    .sf-copy { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: rgba(245,240,232,0.4); }
+
+    .lesson-nav::-webkit-scrollbar { width: 3px; }
+    .lesson-nav::-webkit-scrollbar-thumb { background: var(--cream-border); }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 1200px) {
+      .fi-stage-row { grid-template-columns: 130px 80px 1fr 160px; }
+      .mt-row { grid-template-columns: 100px 150px 1fr 140px; }
+      .ms-header { grid-template-columns: 50px 170px 1fr 120px; }
+      .ms-row { grid-template-columns: 50px 170px 1fr 120px; }
+    }
+    @media (max-width: 1024px) {
+      .page-body { grid-template-columns: 1fr; }
+      .lesson-nav { display: none; }
+      .lesson { padding: 56px 40px; }
+      .hero { padding: 72px 40px 72px; }
+      .hero-rule { left: 40px; right: 40px; }
+      .course-banner { padding: 14px 40px; }
+      .chapter-footer { padding: 56px 40px; gap: 48px; }
+      .site-footer { padding: 20px 40px; }
+      .top-nav { padding: 0 40px; }
+      .obstacle-map { grid-template-columns: 1fr; }
+      .bp-fields { grid-template-columns: 1fr 1fr; }
+      .finale-block { padding: 56px 40px; }
+      .finale-stats { grid-template-columns: repeat(2, 1fr); }
+      .finale-principles { grid-template-columns: 1fr; }
+      .fi-stage-row { grid-template-columns: 120px 1fr; }
+      .fi-stage-net { display: none; }
+      .fi-stage-action { display: none; }
+      .mt-row { grid-template-columns: 90px 1fr; }
+      .mt-milestone { display: none; }
+      .mt-kpi { display: none; }
+      .ms-header { grid-template-columns: 50px 1fr; }
+      .ms-row { grid-template-columns: 50px 1fr; }
+      .ms-action { display: none; }
+      .ms-header div:last-child, .ms-header div:nth-child(3) { display: none; }
+    }
+    @media (max-width: 640px) {
+      .hero { padding: 56px 24px 56px; }
+      .hero-rule { left: 24px; right: 24px; }
+      .hero-number { display: none; }
+      .hero-final-badge { display: none; }
+      .hero-meta { flex-wrap: wrap; }
+      .course-banner { padding: 12px 24px; flex-direction: column; gap: 10px; }
+      .lesson { padding: 40px 24px; }
+      .data-row { grid-template-columns: 1fr; }
+      .concept-item { grid-template-columns: 1fr; }
+      .concept-term { border-right: none; border-bottom: 1px solid var(--cream-border); }
+      .habit-grid { grid-template-columns: 1fr; }
+      .bp-fields { grid-template-columns: 1fr; }
+      .chapter-footer { grid-template-columns: 1fr; gap: 40px; padding: 40px 24px; }
+      .site-footer { padding: 20px 24px; flex-direction: column; gap: 8px; text-align: center; }
+      .top-nav { padding: 0 20px; }
+      .nav-links { display: none; }
+      .finale-block { padding: 40px 24px; }
+      .finale-stats { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<div id="progress-bar"></div>
+
+<nav class="top-nav">
+  <div class="nav-breadcrumb">個人理財課程 / <span>模組十</span></div>
+  <div class="nav-links">
+    <a href="index.html">課程目錄</a>
+    <a href="chapter9.html">模組九</a>
+    <a href="#lesson-1" class="active">單元 01</a>
+    <a href="#lesson-2">單元 02</a>
+    <a href="#lesson-3">單元 03</a>
+    <a href="#lesson-4">單元 04</a>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="hero-rule"></div>
+  <div class="hero-final-badge">最終模組</div>
+  <div class="hero-meta">
+    <span class="mod-label">Module 10</span>
+    <span class="dot"></span>
+    <span>Freedom</span>
+    <span class="dot"></span>
+    <span>財務自由</span>
+  </div>
+  <h1 class="hero-title">
+    財務自由
+    <span class="line2">藍圖實戰</span>
+  </h1>
+  <p class="hero-deck">九個模組奠定了基礎，第十個模組把它們整合成屬於你的行動藍圖。財務自由不是一個抽象目標，而是一系列精確可量化的里程碑，一個可以分階段執行的計劃，以及面對人生變數時持續調整的能力。這裡是所有知識的落地之處。</p>
+  <div class="hero-meta-bottom">
+    <div class="meta-item">
+      <span class="meta-label">單元數</span>
+      <span class="meta-value">04</span>
+    </div>
+    <div class="meta-item">
+      <span class="meta-label">學習時間</span>
+      <span class="meta-value">96 min</span>
+    </div>
+    <div class="meta-item">
+      <span class="meta-label">難度</span>
+      <span class="meta-value">綜合</span>
+    </div>
+    <div class="meta-item">
+      <span class="meta-label">附件</span>
+      <span class="meta-value">5 份</span>
+    </div>
+    <div class="meta-item">
+      <span class="meta-label">課程狀態</span>
+      <span class="meta-value" style="color:var(--red);">最終章</span>
+    </div>
+  </div>
+  <div class="hero-number">10</div>
+</header>
+
+<div class="course-banner">
+  <div class="cb-text">課程進度 — 10 / 10 模組</div>
+  <div class="cb-modules">
+    <div class="cb-module done"></div>
+    <div class="cb-module done"></div>
+    <div class="cb-module done"></div>
+    <div class="cb-module done"></div>
+    <div class="cb-module done"></div>
+    <div class="cb-module done"></div>
+    <div class="cb-module done"></div>
+    <div class="cb-module done"></div>
+    <div class="cb-module done"></div>
+    <div class="cb-module done"></div>
+  </div>
+</div>
+
+<div class="page-body">
+
+  <aside class="lesson-nav">
+    <div class="lesson-nav-title">本章單元</div>
+    <a href="#lesson-1" class="active">
+      <span class="ln-num">10—01</span>
+      定義你的財務自由：五個階段框架
+    </a>
+    <a href="#lesson-2">
+      <span class="ln-num">10—02</span>
+      個人財務自由藍圖的建立方法
+    </a>
+    <a href="#lesson-3">
+      <span class="ln-num">10—03</span>
+      常見障礙與心理陷阱的破解
+    </a>
+    <a href="#lesson-4">
+      <span class="ln-num">10—04</span>
+      十大行動習慣與課程整合
+    </a>
+  </aside>
+
+  <div class="lessons-content">
+
+    <!-- ════════════════════════════════ LESSON 1 ════════════════════════════════ -->
+    <section class="lesson" id="lesson-1">
+      <div class="lesson-header">
+        <div class="lesson-tag-row">
+          <span class="lesson-num-tag">Lesson 10—01</span>
+          <span class="lesson-duration">約 24 分鐘</span>
+        </div>
+        <h2 class="lesson-title">定義你的財務自由<br/>五個階段框架</h2>
+        <p class="lesson-subtitle">「財務自由」在不同的語境下有截然不同的意義。對某些人是「不必再為錢焦慮」，對另一些人是「可以明天就辭職」。在制定任何計劃之前，先精確定義你所追求的，是哪一個層次的財務狀態。</p>
+      </div>
+
+      <div class="content-block">
+        <div class="block-label">財務自由不是二元狀態，而是連續光譜</div>
+        <p class="body-text">財務自由最常見的誤解，是把它當成一個「到了就到了」的終點——累積到某個數字，然後從此無憂。現實中，財務自由更像一條從「財務焦慮」到「財務完全自主」的連續光譜，中間有五個可識別、可量化的階段。</p>
+        <p class="body-text">理解這五個階段的意義，不只是知識性的分類，而是<strong>讓你知道自己目前在哪裡，下一個里程碑是什麼，以及需要做什麼才能前進</strong>。模糊的目標產生模糊的行動；精確的階段定義產生精確的計劃。</p>
+      </div>
+
+      <div class="fi-stages">
+        <div class="fi-stages-header">財務自由的五個階段</div>
+        <div class="fi-stage-row">
+          <div class="fi-stage-name">財務安全<br/><small>Security</small></div>
+          <div class="fi-stage-net">淨資產<br/>正數且增長</div>
+          <div class="fi-stage-desc"><strong>定義：</strong>無高利率債務、有 3–6 個月緊急備用金、每月收入穩定超過支出，淨資產為正且持續增長。財務不再是每個月月底的焦慮來源。<br/><br/>這是財務旅程的第一個真正里程碑。到達這裡，意味著你已從「財務脆弱」轉為「財務穩定」——有足夠的緩衝面對大多數日常突發事件，不需要每次意外都讓財務狀況倒退。</div>
+          <div class="fi-stage-action"><strong>關鍵行動：</strong><br/>清除所有循環信用卡債務。建立自動化儲蓄系統。確保每月正現金流至少 10%。</div>
+        </div>
+        <div class="fi-stage-row">
+          <div class="fi-stage-name">財務活躍<br/><small>Vitality</small></div>
+          <div class="fi-stage-net">年支出<br/>×3–5倍</div>
+          <div class="fi-stage-desc"><strong>定義：</strong>投資組合規模達到年支出的 3–5 倍，同時有穩定的收入來源。即使短期失業，資產也能提供至少 3–5 年的財務緩衝，讓你有充分的空間在不恐慌的情況下重新找到方向。<br/><br/>達到這個階段，你開始真正感受到「選擇的自由」——可以更挑剔地選擇工作，可以承擔更大的職業風險，不再因為財務壓力而被迫接受不滿意的工作條件。</div>
+          <div class="fi-stage-action"><strong>關鍵行動：</strong><br/>投資組合達到年支出 3 倍。建立完整 IPS。最大化所有稅前儲蓄工具。</div>
+        </div>
+        <div class="fi-stage-row">
+          <div class="fi-stage-name">財務獨立<br/><small>Independence</small></div>
+          <div class="fi-stage-net">年支出<br/>×25倍</div>
+          <div class="fi-stage-desc"><strong>定義：</strong>投資組合達到年支出的 25 倍（4% 提領率對應值），被動收入足以覆蓋所有生活費用。此時，你在理論上可以選擇「永不再為錢工作」，工作成為選擇而非必要。<br/><br/>這是最常被稱為「FIRE（Financial Independence, Retire Early）」的目標狀態。達到這裡，你的時間完全屬於自己——可以選擇繼續工作、換一份更有意義但薪酬更低的工作、或完全停止工作。</div>
+          <div class="fi-stage-action"><strong>關鍵行動：</strong><br/>達到 25x 年支出。建立三桶水提領系統。確認勞保勞退整合計劃。</div>
+        </div>
+        <div class="fi-stage-row">
+          <div class="fi-stage-name">財務充裕<br/><small>Abundance</small></div>
+          <div class="fi-stage-net">年支出<br/>×33倍</div>
+          <div class="fi-stage-desc"><strong>定義：</strong>投資組合達到年支出的 33 倍（3% 提領率），有顯著的財務安全邊際。不只是「夠用」，而是「充裕」——有能力應對意外的大額支出、長期醫療需求，以及計劃之外的生命機遇。<br/><br/>這個階段的人通常不需要再對日常支出做任何財務計算——每一個合理的消費決定都能輕鬆承擔，財務不再是任何生活決策的限制因素。</div>
+          <div class="fi-stage-action"><strong>關鍵行動：</strong><br/>優化資產傳承規劃。評估是否需要更積極的社會影響（捐贈、投資）。</div>
+        </div>
+        <div class="fi-stage-row">
+          <div class="fi-stage-name">財務自主<br/><small>Autonomy</small></div>
+          <div class="fi-stage-net">資產持續<br/>超過提領</div>
+          <div class="fi-stage-desc"><strong>定義：</strong>資產規模達到不只支撐自己的生命，且能在生命結束後留下顯著的財富傳承或社會影響的程度。在任何可預見的情境下，財務都不會成為問題。<br/><br/>達到這個階段的人，財務規劃的重心從「如何維持」轉為「如何有意義地運用」——這是財務旅程從「自我需求滿足」轉向「更大貢獻」的轉折點。對多數人而言，這不是必要追求的目標，但理解它的存在，有助於認識整個財務自由光譜的全貌。</div>
+          <div class="fi-stage-action"><strong>關鍵行動：</strong><br/>設立遺囑和信託。規劃系統性慈善捐贈或家族辦公室架構。</div>
+        </div>
+      </div>
+
+      <div class="content-block">
+        <div class="block-label">台灣各階段的淨資產參考門檻（2024 年）</div>
+      </div>
+
+      <div class="formula-block">
+        <span class="f-comment">// 假設：台灣雙薪家庭，年支出 72–96 萬元（月均 6–8 萬）</span><br/><br/>
+        財務安全（緊急備用金到位，淨資產正數）：<span class="f-good">淨資產 &gt; 0，緊急備用金 30–50 萬</span><br/>
+        財務活躍（年支出 × 3–5 倍）：<span class="f-good">約 220–480 萬元</span><br/>
+        財務獨立（年支出 × 25 倍）：<span class="f-highlight">約 1,800–2,400 萬元</span><br/>
+        財務充裕（年支出 × 33 倍）：<span class="f-highlight">約 2,400–3,200 萬元</span><br/>
+        財務自主（後代傳承 + 社會影響）：<span class="f-highlight">5,000 萬元以上</span><br/><br/>
+        <span class="f-comment">// 注意：以上數字假設無勞保勞退收入。若計入勞保月領約 2 萬元（≒ 600 萬等值資產）</span><br/>
+        <span class="f-comment">// 財務獨立的個人投資組合目標可降低約 600 萬，即 1,200–1,800 萬元範圍</span>
+      </div>
+
+      <div class="pull-quote">
+        <div class="pull-quote-text">「財務自由不是你達到的一個數字，而是你建立的一種結構。那個結構讓你的時間和選擇不再被金錢所束縛——無論你的數字多大或多小。」</div>
+        <div class="pull-quote-source">— 財務自由的本質定義</div>
+      </div>
+
+      <div class="takeaway">
+        <div class="takeaway-label">本單元核心結論</div>
+        <div class="takeaway-text">財務自由是五個可量化的階段，不是一個全有或全無的終點。你可能已經在第二或第三階段，也可能剛開始第一階段——無論在哪裡，知道下一個里程碑是什麼，比模糊地追求「自由」更有力量。確定你的當前位置，設定下一個具體目標，這是今天就可以完成的行動。</div>
+      </div>
+
+      <div class="tools-row">
+        <span class="tool-tag primary">財務自由階段自我診斷工具</span>
+        <span class="tool-tag">五階段淨資產追蹤表</span>
+      </div>
+    </section>
+
+    <!-- ════════════════════════════════ LESSON 2 ════════════════════════════════ -->
+    <section class="lesson" id="lesson-2">
+      <div class="lesson-header">
+        <div class="lesson-tag-row">
+          <span class="lesson-num-tag">Lesson 10—02</span>
+          <span class="lesson-duration">約 24 分鐘</span>
+        </div>
+        <h2 class="lesson-title">個人財務自由藍圖<br/>的建立方法</h2>
+        <p class="lesson-subtitle">藍圖是計劃的具體化。它把你的目標從「希望」轉化為「計劃」——有具體數字、有時間軸、有里程碑、有應對變數的機制。這個單元提供藍圖的標準架構和填寫指引。</p>
+      </div>
+
+      <div class="content-block">
+        <div class="block-label">財務自由藍圖的七個核心組件</div>
+        <p class="body-text">一份有效的個人財務藍圖，不是一份充滿數字的試算表，而是一個把你的財務願景、現實狀況和行動計劃整合成連貫文件的架構。它需要定期更新，在人生重大轉折後重新評估，並在必要時調整。</p>
+      </div>
+
+      <div class="blueprint">
+        <div class="blueprint-header">
+          <div class="blueprint-title">個人財務自由藍圖模板</div>
+          <div class="blueprint-sub">Personal Financial Freedom Blueprint</div>
+        </div>
+        <div class="blueprint-sections">
+
+          <div class="bp-section">
+            <div class="bp-section-head">
+              <span class="bp-section-num">01</span>
+              <span class="bp-section-title">財務現況快照（每季更新）</span>
+            </div>
+            <div class="bp-fields">
+              <div class="bp-field">
+                <div class="bp-field-label">目前淨資產</div>
+                <div class="bp-field-line"></div>
+                <div class="bp-field-hint">總資產（投資 + 現金 + 不動產）<br/>減去總負債（房貸 + 其他債務）<br/><strong>填入：_____ 萬元</strong></div>
+              </div>
+              <div class="bp-field">
+                <div class="bp-field-label">月收入 vs. 月支出</div>
+                <div class="bp-field-line"></div>
+                <div class="bp-field-hint">月收入 _____，月支出 _____<br/>儲蓄率 = (收入 − 支出) ÷ 收入<br/><strong>目前儲蓄率：_____ %</strong></div>
+              </div>
+              <div class="bp-field">
+                <div class="bp-field-label">當前財務自由階段</div>
+                <div class="bp-field-line"></div>
+                <div class="bp-field-hint">對照單元 01 的五階段框架<br/>（安全 / 活躍 / 獨立 / 充裕 / 自主）<br/><strong>當前階段：_____________</strong></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="bp-section">
+            <div class="bp-section-head">
+              <span class="bp-section-num">02</span>
+              <span class="bp-section-title">財務目標定義（每年檢視）</span>
+            </div>
+            <div class="bp-fields">
+              <div class="bp-field">
+                <div class="bp-field-label">目標財務自由階段</div>
+                <div class="bp-field-line"></div>
+                <div class="bp-field-hint">你追求的終點是哪個階段？<br/>（多數人追求「財務獨立」即可）<br/><strong>目標階段：_____________</strong></div>
+              </div>
+              <div class="bp-field">
+                <div class="bp-field-label">退休後月支出目標</div>
+                <div class="bp-field-line"></div>
+                <div class="bp-field-hint">以今日幣值估算退休生活費<br/>（含醫療、旅遊、興趣等）<br/><strong>月支出目標：_____ 萬元</strong></div>
+              </div>
+              <div class="bp-field">
+                <div class="bp-field-label">目標退休年齡</div>
+                <div class="bp-field-line"></div>
+                <div class="bp-field-hint">幾歲希望達到財務獨立？<br/>（影響所需資產和時間跨度）<br/><strong>目標年齡：_____ 歲</strong></div>
+              </div>
+              <div class="bp-field bp-wide">
+                <div class="bp-field-label">目標退休所需總資產（計算值）</div>
+                <div class="bp-field-line"></div>
+                <div class="bp-field-hint">年支出（目標月支出 × 12）÷ 提領率（建議 3–4%）− 勞保勞退等值資產 = 個人投資組合目標<br/><strong>計算結果：_____ 萬元（需個人投資組合）　距離目前缺口：_____ 萬元</strong></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="bp-section">
+            <div class="bp-section-head">
+              <span class="bp-section-num">03</span>
+              <span class="bp-section-title">資產配置計劃（IPS 摘要）</span>
+            </div>
+            <div class="bp-fields">
+              <div class="bp-field">
+                <div class="bp-field-label">核心資產配置</div>
+                <div class="bp-field-line"></div>
+                <div class="bp-field-hint">股票 ____%、債券 ____%、現金 ____%<br/>（依模組七的生命週期框架）<br/><strong>下次調整時間：_________</strong></div>
+              </div>
+              <div class="bp-field">
+                <div class="bp-field-label">核心持倉工具</div>
+                <div class="bp-field-line"></div>
+                <div class="bp-field-hint">列出主要 1–3 檔 ETF 和比例<br/>（依模組六的工具選擇）<br/><strong>例：VT 70% + 0050 20% + BND 10%</strong></div>
+              </div>
+              <div class="bp-field">
+                <div class="bp-field-label">再平衡機制</div>
+                <div class="bp-field-line"></div>
+                <div class="bp-field-hint">觸發再平衡的條件<br/>（偏離 ≥ 5% 或每年一次）<br/><strong>上次再平衡：_________</strong></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="bp-section">
+            <div class="bp-section-head">
+              <span class="bp-section-num">04</span>
+              <span class="bp-section-title">月度執行儀表板（每月追蹤）</span>
+            </div>
+            <div class="bp-fields">
+              <div class="bp-field">
+                <div class="bp-field-label">本月投資金額</div>
+                <div class="bp-field-line"></div>
+                <div class="bp-field-hint">實際投入金額 vs. 計劃金額<br/>計劃 _____ 元，實際 _____ 元<br/><strong>達成率：_____ %</strong></div>
+              </div>
+              <div class="bp-field">
+                <div class="bp-field-label">儲蓄率追蹤</div>
+                <div class="bp-field-line"></div>
+                <div class="bp-field-hint">本月實際儲蓄率 vs. 年度目標<br/>年度目標 ____%，本月實際 ____%<br/><strong>今年累積平均：_____ %</strong></div>
+              </div>
+              <div class="bp-field">
+                <div class="bp-field-label">淨資產進度</div>
+                <div class="bp-field-line"></div>
+                <div class="bp-field-hint">本月末淨資產<br/>與目標差距<br/><strong>_____ 萬（距目標 _____ 萬）</strong></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="bp-section">
+            <div class="bp-section-head">
+              <span class="bp-section-num">05</span>
+              <span class="bp-section-title">風險管理清單（每年檢視）</span>
+            </div>
+            <div class="bp-fields">
+              <div class="bp-field">
+                <div class="bp-field-label">保障缺口評估</div>
+                <div class="bp-field-line"></div>
+                <div class="bp-field-hint">失能險、醫療險、壽險是否完整？<br/>（依模組四的保障框架）<br/><strong>最近一次檢視：_________</strong></div>
+              </div>
+              <div class="bp-field">
+                <div class="bp-field-label">稅務優化狀態</div>
+                <div class="bp-field-line"></div>
+                <div class="bp-field-hint">勞退自提是否達 6%？<br/>股利計稅方式是否已最優化？<br/><strong>今年是否已執行：是 / 否</strong></div>
+              </div>
+              <div class="bp-field">
+                <div class="bp-field-label">遺產規劃狀態</div>
+                <div class="bp-field-line"></div>
+                <div class="bp-field-hint">是否有遺囑？受益人是否更新？<br/>海外遺產稅風險是否評估？<br/><strong>最近一次更新：_________</strong></div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <div class="content-block">
+        <div class="block-label">從目前淨資產到財務獨立的里程碑時間軸</div>
+        <p class="body-text">以下展示一個具體範例：35 歲、目前淨資產 200 萬元、月薪 6 萬元、目標 55 歲財務獨立（退休月支出 6 萬元）的工作者，其財務旅程的關鍵里程碑規劃。</p>
+      </div>
+
+      <div class="milestone-timeline">
+        <div class="mt-header">財務自由里程碑時間軸（範例：35 歲起步）</div>
+        <div class="mt-rows">
+          <div class="mt-row">
+            <div class="mt-phase">現在<span>35 歲</span></div>
+            <div class="mt-milestone">財務安全<br/>已到位</div>
+            <div class="mt-actions">淨資產 200 萬元。無高利率債務。緊急備用金 30 萬元。<strong>每月投資 1.5 萬元</strong>（佔月收入 25%）。完成 IPS，持有 VT 80% + BND 20%。勞退自提設定 6%。</div>
+            <div class="mt-kpi"><strong>關鍵指標</strong>儲蓄率 25%<br/>月投入 1.5 萬<br/>淨資產 200 萬</div>
+          </div>
+          <div class="mt-row">
+            <div class="mt-phase">5 年後<span>40 歲</span></div>
+            <div class="mt-milestone">財務活躍<br/>階段達成</div>
+            <div class="mt-actions">預期淨資產 580–650 萬元（200 萬本金 + 5 年投入 90 萬 + 複利成長）。<strong>開始感受到選擇的自由</strong>——可以更挑剔地選擇工作方向，有 5 年以上的財務緩衝。調整股債比至 75/25，反映距退休縮短。</div>
+            <div class="mt-kpi"><strong>關鍵指標</strong>淨資產 600 萬<br/>投資組合 550 萬<br/>月支出 × 8 倍</div>
+          </div>
+          <div class="mt-row">
+            <div class="mt-phase">10 年後<span>45 歲</span></div>
+            <div class="mt-milestone">進入關鍵<br/>加速期</div>
+            <div class="mt-actions">預期淨資產 1,100–1,300 萬元。複利效應開始顯著加速——資產自我增長的速度接近月薪儲蓄的速度。<strong>開始籌劃退休後的生活設計</strong>，評估是否調整職涯方向。股債比調整至 70/30。</div>
+            <div class="mt-kpi"><strong>關鍵指標</strong>淨資產 1,200 萬<br/>月配息約 3 萬<br/>距目標 50%</div>
+          </div>
+          <div class="mt-row">
+            <div class="mt-phase">15 年後<span>50 歲</span></div>
+            <div class="mt-milestone">接近臨界<br/>序列風險期</div>
+            <div class="mt-actions">預期淨資產 1,700–2,000 萬元。<strong>進入退休前最關鍵的五年</strong>——序列風險最高。開始建立三桶水架構，現金桶保留 3 年生活費（約 216 萬）。股債比調整至 65/35，降低波動暴露。</div>
+            <div class="mt-kpi"><strong>關鍵指標</strong>淨資產 1,800 萬<br/>月配息約 5 萬<br/>距目標 85%</div>
+          </div>
+          <div class="mt-row">
+            <div class="mt-phase">20 年後<span>55 歲</span></div>
+            <div class="mt-milestone">財務獨立<br/>達成</div>
+            <div class="mt-actions">預期淨資產 2,200–2,600 萬元，超越 25 倍年支出目標（年支出 72 萬 × 25 = 1,800 萬）。<strong>工作成為選擇，而非必要</strong>。三桶水策略啟動。65 歲請領勞保年金，進一步降低投資組合提領壓力。</div>
+            <div class="mt-kpi"><strong>關鍵指標</strong>淨資產 2,400 萬<br/>月配息約 7 萬<br/>目標達成</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="takeaway">
+        <div class="takeaway-label">本單元核心結論</div>
+        <div class="takeaway-text">財務自由藍圖的核心價值，不在於它預測未來的精確度，而在於它把抽象的「希望」轉化為具體的「計劃」。每一個里程碑都是一個確認點——確認你走在正確的軌道上，或者識別需要調整的偏差。計劃本身會改變，但有計劃和沒有計劃的差距，在 20 年後將是巨大的。</div>
+      </div>
+
+      <div class="tools-row">
+        <span class="tool-tag primary">個人財務自由藍圖可填式模板（PDF）</span>
+        <span class="tool-tag">20 年里程碑時間軸試算器</span>
+        <span class="tool-tag">每月財務儀表板追蹤表</span>
+      </div>
+    </section>
+
+    <!-- ════════════════════════════════ LESSON 3 ════════════════════════════════ -->
+    <section class="lesson" id="lesson-3">
+      <div class="lesson-header">
+        <div class="lesson-tag-row">
+          <span class="lesson-num-tag">Lesson 10—03</span>
+          <span class="lesson-duration">約 24 分鐘</span>
+        </div>
+        <h2 class="lesson-title">常見障礙<br/>與心理陷阱的破解</h2>
+        <p class="lesson-subtitle">財務自由的最大障礙，通常不是知識不足，而是行為問題——那些讓人「知道但做不到」的心理機制。這個單元系統性地整理最常見的八個執行障礙，以及每一個的具體破解方法。</p>
+      </div>
+
+      <div class="content-block">
+        <div class="block-label">知識 vs. 行為：財務旅程中最大的落差</div>
+        <p class="body-text">研究顯示，財務知識的提升和財務行為的改善之間，相關性遠低於大多數人預期。了解複利的威力不一定讓人開始投資；知道緊急備用金的重要性不一定讓人建立它；理解過度消費的危害不一定讓人停止過度消費。</p>
+        <p class="body-text"><strong>知識是必要條件，但不是充分條件。</strong>行為改變需要系統設計——把正確的行為變得「容易」，把錯誤的行為變得「困難」。這是模組五中行為財務學的核心洞見在實際生活中的應用。</p>
+      </div>
+
+      <div class="obstacle-map">
+
+        <div class="ob-card">
+          <div class="ob-num">Obstacle 01</div>
+          <div class="ob-title">「先過好當下，老了再說」的現在偏誤</div>
+          <div class="ob-why">大腦對即時享受的偏好遠超對未來的理性計算。退休是幾十年後的事，現在的犧牲感非常真實，未來的好處非常模糊。</div>
+          <div class="ob-rows">
+            <div class="ob-row">
+              <div class="ob-row-label">破解方式</div>
+              <div class="ob-row-val"><strong>自動化</strong>：薪資入帳後自動轉入投資帳戶，在你「看到」錢之前已完成儲蓄。不依賴意志力，而是設計系統讓正確行為自動發生。</div>
+            </div>
+            <div class="ob-row">
+              <div class="ob-row-label">具體操作</div>
+              <div class="ob-row-val">設定薪資入帳日 + 1 天自動定期定額扣款。先投資後消費，不留「剩餘才投資」的餘地。</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="ob-card">
+          <div class="ob-num">Obstacle 02</div>
+          <div class="ob-title">消費升級陷阱（生活膨脹）</div>
+          <div class="ob-why">每次加薪、升遷或獎金入帳後，支出隨之同比例甚至超比例增加。月薪從 4 萬到 8 萬，但儲蓄金額幾乎沒有增加——因為生活水準同步升級。</div>
+          <div class="ob-rows">
+            <div class="ob-row">
+              <div class="ob-row-label">破解方式</div>
+              <div class="ob-row-val"><strong>加薪 50% 法則</strong>：每次加薪，將加薪金額的 50% 自動增加投資，剩餘 50% 可用於提升生活品質。用公式鎖定財富增長，而非讓消費自然填滿所有增加的收入。</div>
+            </div>
+            <div class="ob-row">
+              <div class="ob-row-label">具體操作</div>
+              <div class="ob-row-val">加薪後立即更新自動扣款設定，在新的生活方式確立之前完成。等到「已習慣新支出」才改設定，永遠會太晚。</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="ob-card">
+          <div class="ob-num">Obstacle 03</div>
+          <div class="ob-title">市場下跌時的恐慌賣出</div>
+          <div class="ob-why">帳戶下跌 20–30% 的視覺衝擊，觸發大腦的損失趨避機制，產生「再不賣就更慘」的恐懼。這是投資者行為中損害最大的單一錯誤，也是最普遍的。</div>
+          <div class="ob-rows">
+            <div class="ob-row">
+              <div class="ob-row-label">破解方式</div>
+              <div class="ob-row-val"><strong>預先設定崩盤行動計劃</strong>（Fire Drill）：在市場平靜時寫下「當市場下跌 X% 時，我將執行 Y 行動」，並簽名。崩盤時執行計劃，而非重新思考。</div>
+            </div>
+            <div class="ob-row">
+              <div class="ob-row-label">具體操作</div>
+              <div class="ob-row-val">在 IPS 中加入：「市場下跌 30% 時，我將用緊急備用金外的閒置現金加碼買入，而非賣出」。降低查看帳戶頻率至每月一次。</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="ob-card">
+          <div class="ob-num">Obstacle 04</div>
+          <div class="ob-title">「等完美時機才投資」的分析癱瘓</div>
+          <div class="ob-why">持續閱讀財經新聞，覺得「現在市場太高」、「經濟前景不明」、「等下一個機會」，結果是資金長期閒置。每個時期都有看空的理由，等待的代價是錯過的複利。</div>
+          <div class="ob-rows">
+            <div class="ob-row">
+              <div class="ob-row-label">破解方式</div>
+              <div class="ob-row-val"><strong>減少資訊攝取</strong>：財經新聞的設計目的是讓你持續關注，不是讓你做出更好的投資決策。限制自己每月只閱讀一次財務相關內容；停止看日線圖和每日漲跌。</div>
+            </div>
+            <div class="ob-row">
+              <div class="ob-row-label">具體操作</div>
+              <div class="ob-row-val">設定自動化投資，讓每月固定扣款，不需要「決定進場」。把重新審視投資的頻率從「每天」降至「每年一次」。</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="ob-card">
+          <div class="ob-num">Obstacle 05</div>
+          <div class="ob-title">投資組合頻繁變動（操作過度）</div>
+          <div class="ob-why">每隔幾個月就「更新策略」——換到當下最熱的 ETF，根據最新消息調整配置，追逐近期表現最好的資產。每次操作都有「優化」的感覺，但實際上通常是追高殺低。</div>
+          <div class="ob-rows">
+            <div class="ob-row">
+              <div class="ob-row-label">破解方式</div>
+              <div class="ob-row-val"><strong>設置操作摩擦力</strong>：在 IPS 中規定，任何非再平衡的買賣操作，必須至少等待 72 小時，且需要寫下書面理由。讓衝動決定有「冷靜期」。</div>
+            </div>
+            <div class="ob-row">
+              <div class="ob-row-label">具體操作</div>
+              <div class="ob-row-val">設定帳戶每年只能進行兩次手動操作（再平衡除外）。每次想「優化」時，先問：「五年後我還會認為這個改變是正確的嗎？」</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="ob-card">
+          <div class="ob-num">Obstacle 06</div>
+          <div class="ob-title">高估自己的風險承受度</div>
+          <div class="ob-why">填問卷時說自己可以承受 40% 的跌幅，但當帳戶真的跌了 30% 時，發現自己夜不成眠、考慮賣出。這種「假想風險承受度」和「真實風險承受度」的落差，是最常見的自我認知誤差之一。</div>
+          <div class="ob-rows">
+            <div class="ob-row">
+              <div class="ob-row-label">破解方式</div>
+              <div class="ob-row-val"><strong>以行為而非意向確定配置</strong>：把股債比調低到「你確認能在帳戶下跌時完全不恐慌」的水準，而非「你認為自己應該能承受」的水準。多拿一點報酬不值得一次恐慌賣出的代價。</div>
+            </div>
+            <div class="ob-row">
+              <div class="ob-row-label">具體操作</div>
+              <div class="ob-row-val">回憶過去市場下跌時你的實際反應（2020 年 3 月，2022 年全年），以那時的感受而非想象中的反應，決定你的實際股票比例上限。</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="ob-card">
+          <div class="ob-num">Obstacle 07</div>
+          <div class="ob-title">財務規劃的孤獨執行困境</div>
+          <div class="ob-why">財務旅程往往是孤獨的——不像健身可以約同伴，很少有人公開分享真實的財務目標和進度。缺乏問責機制，在計劃偏離時沒有外部提醒，容易悄悄放棄或拖延。</div>
+          <div class="ob-rows">
+            <div class="ob-row">
+              <div class="ob-row-label">破解方式</div>
+              <div class="ob-row-val"><strong>建立問責夥伴系統</strong>：找一個有相似財務目標的朋友，每季交換財務進度報告（不需要分享具體金額，只需要目標 vs. 實際的達成率）。外部問責顯著提高目標達成率。</div>
+            </div>
+            <div class="ob-row">
+              <div class="ob-row-label">具體操作</div>
+              <div class="ob-row-val">在日曆上設定每季一次的「財務健診日」，與問責夥伴在同一天各自獨立更新藍圖，然後互相分享三件做到的事和一件需要改進的事。</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="ob-card">
+          <div class="ob-num">Obstacle 08</div>
+          <div class="ob-title">遭遇重大生命事件後的計劃中斷</div>
+          <div class="ob-why">生孩子、買房、失業、父母生病——這些生命中的重大事件會打亂財務計劃，有時導致長達數年的財務退步。若沒有明確的「重啟協議」，人們往往在事件後遲遲無法回到正軌。</div>
+          <div class="ob-rows">
+            <div class="ob-row">
+              <div class="ob-row-label">破解方式</div>
+              <div class="ob-row-val"><strong>預先設計重啟協議</strong>：在藍圖中寫入「若重大事件導致計劃中斷，我將在事件穩定後的 3 個月內重新評估藍圖並更新里程碑」。不追求完美執行，只要求持續重啟。</div>
+            </div>
+            <div class="ob-row">
+              <div class="ob-row-label">具體操作</div>
+              <div class="ob-row-val">接受「財務旅程有時候會有低谷」的事實。最重要的不是不發生挫折，而是每次挫折後都能回到正軌。沒有人的財務旅程是一條直線。</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="takeaway">
+        <div class="takeaway-label">本單元核心結論</div>
+        <div class="takeaway-text">財務規劃的執行障礙，幾乎都是行為問題而非知識問題。破解之道不是「更努力地對抗本能」，而是「設計讓本能幫你的系統」——自動化好的行為，增加壞的行為的摩擦力，建立外部問責機制，預先設計應對變數的協議。系統比意志力更可靠。</div>
+      </div>
+
+      <div class="tools-row">
+        <span class="tool-tag primary">個人財務行為障礙診斷表</span>
+        <span class="tool-tag">崩盤行動計劃模板（Fire Drill）</span>
+      </div>
+    </section>
+
+    <!-- ════════════════════════════════ LESSON 4 ════════════════════════════════ -->
+    <section class="lesson" id="lesson-4">
+      <div class="lesson-header">
+        <div class="lesson-tag-row">
+          <span class="lesson-num-tag">Lesson 10—04</span>
+          <span class="lesson-duration">約 24 分鐘</span>
+        </div>
+        <h2 class="lesson-title">十大行動習慣<br/>與課程整合</h2>
+        <p class="lesson-subtitle">知識的價值在於轉化為習慣。這個最終單元，把十個模組的核心洞見，提煉成十個可以立即開始、終身維持的財務行動習慣，以及整門課程的完整知識地圖。</p>
+      </div>
+
+      <div class="content-block">
+        <div class="block-label">十個模組的核心洞見整合</div>
+        <p class="body-text">在進入行動習慣之前，先把這門課程的知識架構完整呈現出來。十個模組不是十個獨立的知識點，而是一個相互支撐的整體系統——每一個模組都建立在前一個的基礎上，並為後一個模組提供支撐。</p>
+      </div>
+
+      <div class="module-synthesis">
+        <div class="ms-header">
+          <div>模組</div>
+          <div>主題</div>
+          <div>最重要的一個洞見</div>
+          <div>核心行動</div>
+        </div>
+        <div class="ms-row">
+          <div class="ms-num">01</div>
+          <div class="ms-name">財務覺醒<small>Foundation</small></div>
+          <div class="ms-insight">你的金錢腳本和消費習慣，在你意識到它之前已經形成。<strong>意識是改變的起點</strong>——計算淨資產和識別消費模式，比任何投資技巧都更基礎。</div>
+          <div class="ms-action">每年計算一次淨資產，建立年度財務基準線</div>
+        </div>
+        <div class="ms-row">
+          <div class="ms-num">02</div>
+          <div class="ms-name">預算管理<small>Budgeting</small></div>
+          <div class="ms-insight"><strong>儲蓄率比收入更決定財富積累速度。</strong>月薪 3 萬元儲蓄率 40%，比月薪 10 萬元儲蓄率 10% 更快達到財務自由。控制支出，是財務旅程中唯一完全在自己掌控中的變數。</div>
+          <div class="ms-action">設定自動化儲蓄，維持儲蓄率 20% 以上</div>
+        </div>
+        <div class="ms-row">
+          <div class="ms-num">03</div>
+          <div class="ms-name">債務管理<small>Debt</small></div>
+          <div class="ms-insight"><strong>所有年利率 8% 以上的債務，都是財富積累的最大障礙。</strong>清除高利率債務的投資報酬率，等同於保證 15–20% 的年化報酬——任何投資工具都無法保證這樣的回報。</div>
+          <div class="ms-action">優先清除所有循環信用卡債務，再開始投資</div>
+        </div>
+        <div class="ms-row">
+          <div class="ms-num">04</div>
+          <div class="ms-name">保險規劃<small>Insurance</small></div>
+          <div class="ms-insight"><strong>保險是風險轉移工具，不是財富增值工具。</strong>失能、重疾、定期壽險是有撫養責任者的必要保障；儲蓄型保險的 IRR 通常遠低於指數型 ETF，應分開考量。</div>
+          <div class="ms-action">每五年執行一次保障健診，確保失能險和醫療險完整</div>
+        </div>
+        <div class="ms-row">
+          <div class="ms-num">05</div>
+          <div class="ms-name">投資心理<small>Psychology</small></div>
+          <div class="ms-insight"><strong>行為缺口（約 5–6%）是投資者最大的敵人。</strong>在恐慌時賣出、在貪婪時追高——這兩個行為加在一起，讓投資者的實際報酬遠低於指數報酬。系統比意志力更可靠。</div>
+          <div class="ms-action">完成 IPS，降低帳戶查看頻率，預先設定崩盤行動計劃</div>
+        </div>
+        <div class="ms-row">
+          <div class="ms-num">06</div>
+          <div class="ms-name">投資工具<small>Instruments</small></div>
+          <div class="ms-insight"><strong>低成本指數型 ETF 是大多數個人投資者的最優選擇。</strong>92% 的主動基金在 20 年內無法打敗指數，但它們每年收取 1–2% 的費用。VT 一檔 ETF，持有全球 9,500 家公司，費用率 0.07%。</div>
+          <div class="ms-action">以 VT 或 0050 為核心持倉，費用率保持在 0.5% 以下</div>
+        </div>
+        <div class="ms-row">
+          <div class="ms-num">07</div>
+          <div class="ms-name">資產配置<small>Allocation</small></div>
+          <div class="ms-insight"><strong>投資組合 90% 以上的長期績效由資產配置決定，而非選股或擇時。</strong>分散相關性低的資產，是投資中極少數真正免費的好處。股債比應隨年齡系統性調整。</div>
+          <div class="ms-action">設定股債比滑行軌道，每年再平衡一次回到目標比例</div>
+        </div>
+        <div class="ms-row">
+          <div class="ms-num">08</div>
+          <div class="ms-name">稅務規劃<small>Tax</small></div>
+          <div class="ms-insight"><strong>稅務效率是被嚴重低估的投資報酬組成部分。</strong>選對股利計稅方式每年可省數萬元；勞退自提 6% 是最高效的稅前節稅工具；台灣境內 ETF 目前無資本利得稅，長期持有是最簡單的節稅策略。</div>
+          <div class="ms-action">每年報稅前評估股利計稅方式，勞退自提設定 6%</div>
+        </div>
+        <div class="ms-row">
+          <div class="ms-num">09</div>
+          <div class="ms-name">退休規劃<small>Retirement</small></div>
+          <div class="ms-insight"><strong>退休所需資產 = 年支出 ÷ 3–4%，扣除勞保勞退等值資產。</strong>三桶水策略解決了提領期的序列風險；長壽風險要求規劃至少 30 年退休期；退休後仍需持有股票對抗通膨。</div>
+          <div class="ms-action">計算個人退休目標資產，建立三桶水架構</div>
+        </div>
+        <div class="ms-row">
+          <div class="ms-num">10</div>
+          <div class="ms-name">財務自由<small>Freedom</small></div>
+          <div class="ms-insight"><strong>財務自由是五個可量化的階段，不是全有或全無的終點。</strong>建立個人財務藍圖，定期更新里程碑，系統性破解行為障礙——知識 + 系統 + 時間，是財務自由的完整公式。</div>
+          <div class="ms-action">完成個人財務自由藍圖，設定季度財務健診日</div>
+        </div>
+      </div>
+
+      <div class="content-block">
+        <div class="block-label">十大終身財務行動習慣</div>
+        <p class="body-text">以下十個習慣，是這門課程所有知識的最終落地形式。它們不是一次性的清單，而是需要終身維持的系統性行為。每一個習慣都有明確的執行頻率和時間成本，合計每月約需 2–3 小時的主動管理時間。</p>
+      </div>
+
+      <div class="habit-grid">
+        <div class="habit-card">
+          <div class="habit-freq">Daily Habit · 每日</div>
+          <div class="habit-title">花錢前停頓三秒</div>
+          <div class="habit-time">每次 3 秒，零時間成本</div>
+          <div class="habit-divider"></div>
+          <div class="habit-items">
+            <div class="habit-item">在每次非計劃消費前，問自己：「這個消費讓我更接近還是更遠離財務目標？」</div>
+            <div class="habit-item">不要求每次都說不，只要求每次都有意識地決定</div>
+            <div class="habit-item">三秒的停頓，把衝動消費轉化為有意識的選擇</div>
+          </div>
+        </div>
+        <div class="habit-card">
+          <div class="habit-freq">Weekly Habit · 每週</div>
+          <div class="habit-title">記錄本週支出</div>
+          <div class="habit-time">每週 10–15 分鐘</div>
+          <div class="habit-divider"></div>
+          <div class="habit-items">
+            <div class="habit-item">每週固定時間，檢視本週所有支出，分類標記</div>
+            <div class="habit-item">不需要追到每一分錢，抓住大方向即可</div>
+            <div class="habit-item">識別「隱形支出」——那些沒有意識到卻不斷發生的消費</div>
+          </div>
+        </div>
+        <div class="habit-card">
+          <div class="habit-freq">Monthly Habit · 每月</div>
+          <div class="habit-title">執行財務儀表板</div>
+          <div class="habit-time">每月 30–45 分鐘</div>
+          <div class="habit-divider"></div>
+          <div class="habit-items">
+            <div class="habit-item">更新當月淨資產、投資組合總值、儲蓄率</div>
+            <div class="habit-item">確認自動化投資已執行，記錄任何偏差</div>
+            <div class="habit-item">更新個人財務藍圖中的月度進度欄位</div>
+          </div>
+        </div>
+        <div class="habit-card">
+          <div class="habit-freq">Quarterly Habit · 每季</div>
+          <div class="habit-title">財務健診與問責</div>
+          <div class="habit-time">每季 60–90 分鐘</div>
+          <div class="habit-divider"></div>
+          <div class="habit-items">
+            <div class="habit-item">回顧本季財務目標達成率，識別偏差原因</div>
+            <div class="habit-item">與問責夥伴交換財務進度報告</div>
+            <div class="habit-item">評估是否有重大生活事件需要更新藍圖</div>
+          </div>
+        </div>
+        <div class="habit-card">
+          <div class="habit-freq">Annual Habit · 每年</div>
+          <div class="habit-title">完整年度財務審計</div>
+          <div class="habit-time">每年 3–4 小時</div>
+          <div class="habit-divider"></div>
+          <div class="habit-items">
+            <div class="habit-item">更新全年淨資產變化，計算年化報酬率</div>
+            <div class="habit-item">優化股利計稅方式選擇，確認稅務規劃已執行</div>
+            <div class="habit-item">執行投資組合再平衡，回到目標配置比例</div>
+            <div class="habit-item">更新保障健診、IPS，以及下一年度的財務目標</div>
+          </div>
+        </div>
+        <div class="habit-card">
+          <div class="habit-freq">Event-Based · 事件觸發</div>
+          <div class="habit-title">重大事件後的藍圖更新</div>
+          <div class="habit-time">事件後 3 個月內</div>
+          <div class="habit-divider"></div>
+          <div class="habit-items">
+            <div class="habit-item">工作變動（加薪、換工作）：更新收入和自動扣款設定</div>
+            <div class="habit-item">家庭變動（結婚、生子）：重新評估保障需求和財務責任</div>
+            <div class="habit-item">市場崩盤（跌幅 &gt; 30%）：執行預設的崩盤行動計劃</div>
+            <div class="habit-item">任何使淨資產顯著改變的事件：重新計算財務自由時間軸</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="takeaway">
+        <div class="takeaway-label">課程最終結論</div>
+        <div class="takeaway-text">財務自由不是天賦，不是運氣，也不是高薪的必然結果。它是一系列正確決策在時間中累積的結果：清除障礙、設計系統、建立習慣、持續行動、在人生變數中不斷調整軌道。你現在擁有的知識已經足夠——剩下的，是時間和執行。</div>
+      </div>
+
+      <div class="tools-row">
+        <span class="tool-tag primary">十大習慣年度追蹤器</span>
+        <span class="tool-tag">課程完整知識地圖（PDF）</span>
+        <span class="tool-tag">個人財務自由藍圖完整模板</span>
+        <span class="tool-tag">財務健診年度檢查清單</span>
+        <span class="tool-tag">崩盤行動計劃書面模板</span>
+      </div>
+    </section>
+
+  </div>
+</div>
+
+<!-- GRAND FINALE -->
+<div class="finale-block">
+  <div class="finale-tag">課程完結 · Course Complete</div>
+  <h2 class="finale-heading">十個模組，一個目標：讓財務成為你生活的支撐，而非束縛。</h2>
+  <p class="finale-body">
+    你從理解自己的金錢腳本開始，到建立自動化儲蓄系統，清除高利率債務的絆腳石，用保險建立風險防線，學會用行為科學對抗自己的認知偏誤，選擇低成本 ETF 作為財富積累的引擎，用資產配置在風險和報酬之間找到最優平衡，合法優化每一分稅務負擔，設計一個在你停止工作後仍能持續運轉的退休財務引擎，最後把所有知識整合成一份屬於你的財務自由藍圖。<br/><br/>
+    <strong>現在，最重要的行動只有一個：開始。</strong>
+  </p>
+  <div class="finale-stats">
+    <div class="fs-cell">
+      <div class="fs-num">10</div>
+      <div class="fs-label">完成的模組<br/>涵蓋個人理財全圖譜</div>
+    </div>
+    <div class="fs-cell">
+      <div class="fs-num">40</div>
+      <div class="fs-label">深度學習單元<br/>每單元 18–24 分鐘</div>
+    </div>
+    <div class="fs-cell">
+      <div class="fs-num">15+</div>
+      <div class="fs-label">可立即使用的<br/>行動工具與模板</div>
+    </div>
+    <div class="fs-cell">
+      <div class="fs-num">30+</div>
+      <div class="fs-label">年的財務影響<br/>如果你今天開始執行</div>
+    </div>
+  </div>
+  <div class="finale-principles">
+    <div class="fp-item">
+      <div class="fp-num">Principle 01</div>
+      <div class="fp-text"><strong>儲蓄率比收入更重要。</strong>你無法直接控制市場報酬，但你可以完全控制儲蓄率。提高儲蓄率 10 個百分點，在長期的複利效應下，比提高投資報酬率 2% 更有力量。</div>
+    </div>
+    <div class="fp-item">
+      <div class="fp-num">Principle 02</div>
+      <div class="fp-text"><strong>時間比時機更重要。</strong>在市場中待著的時間，遠比選對進場時機對最終報酬的影響大。今天的平庸進場，勝過永遠等待完美時機的現金閒置。</div>
+    </div>
+    <div class="fp-item">
+      <div class="fp-num">Principle 03</div>
+      <div class="fp-text"><strong>系統比意志力更可靠。</strong>把正確的財務行為自動化，把錯誤的行為設計成有摩擦力。好的財務系統讓你在不需要每天做決定的情況下，持續走向正確的方向。</div>
+    </div>
+    <div class="fp-item">
+      <div class="fp-num">Principle 04</div>
+      <div class="fp-text"><strong>簡單勝過複雜。</strong>持有兩檔 ETF、每月自動投資、每年再平衡一次的「無聊策略」，長期績效通常優於頻繁調整的複雜策略。複雜性不是智慧的標誌，簡單才是。</div>
+    </div>
+    <div class="fp-item">
+      <div class="fp-num">Principle 05</div>
+      <div class="fp-text"><strong>行動勝過完美計劃。</strong>一個現在開始的 80 分計劃，比一個永遠沒有開始的 100 分計劃更有價值。財務旅程中的第一步，永遠比你認為的「最佳時機」更重要。</div>
+    </div>
+    <div class="fp-item">
+      <div class="fp-num">Principle 06</div>
+      <div class="fp-text"><strong>財務自由是工具，不是終點。</strong>財務自由的意義，在於它給你的時間和選擇的自由——讓你能更充分地活在你真正在乎的事物中。積累財富本身不是目的，它是讓你活出想要的人生的手段。</div>
+    </div>
+  </div>
+</div>
+
+<!-- CHAPTER FOOTER -->
+<div class="chapter-footer">
+  <div>
+    <div class="cf-title">課程完成</div>
+    <h3 class="cf-heading">感謝你完成這段旅程</h3>
+    <p class="cf-text">從模組一的財務覺醒，到模組十的財務自由藍圖——你投入了約 16 小時的深度學習，掌握了足以改變你接下來幾十年財務軌跡的知識和框架。知識現在已經在你手中，剩下的是你的行動。</p>
+    <div class="cf-nav-links">
+      <a class="cf-link" href="chapter9.html">返回模組九</a>
+      <a class="cf-link" href="index.html">回到課程總覽</a>
+    </div>
+  </div>
+  <div>
+    <div class="cf-title">下一步</div>
+    <h3 class="cf-heading">從今天開始的三個行動</h3>
+    <p class="cf-text">
+      <strong>一、</strong>計算你的當前淨資產，確定你在五階段框架中的位置。<br/><br/>
+      <strong>二、</strong>下載個人財務自由藍圖模板，填寫你的目標退休資產和時間軸。<br/><br/>
+      <strong>三、</strong>設定一個自動化投資：選擇一檔 ETF，設定每月定期定額，今天就開始。
+    </p>
+  </div>
+</div>
+
+<footer class="site-footer">
+  <div class="sf-logo">FINANCE<span>.</span>COURSE</div>
+  <div class="sf-copy">個人理財與資產配置基礎 · 模組十 / 共十模組 · 課程完結</div>
+</footer>
+
+<script>
+  window.addEventListener('scroll', () => {
+    const el = document.documentElement;
+    const pct = el.scrollTop / (el.scrollHeight - el.clientHeight) * 100;
+    document.getElementById('progress-bar').style.width = pct + '%';
+  });
+
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+  }, { threshold: 0.07 });
+  document.querySelectorAll('.lesson').forEach(el => observer.observe(el));
+
+  const sideLinks = document.querySelectorAll('.lesson-nav a');
+  const topLinks  = document.querySelectorAll('.nav-links a[href^="#"]');
+  const sideObs = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        const id = e.target.id;
+        sideLinks.forEach(a => a.classList.toggle('active', a.getAttribute('href') === '#' + id));
+        topLinks.forEach(a  => a.classList.toggle('active', a.getAttribute('href') === '#' + id));
+      }
+    });
+  }, { threshold: 0.45 });
+  document.querySelectorAll('.lesson').forEach(el => sideObs.observe(el));
+</script>
+</body>
+</html>
